@@ -12,7 +12,7 @@ IMAGE_STORE=download.redpesk.bzh
 
 echo "This will install RedPesk localbuider on your machine"
 
-dist=$(cat /etc/os-release | grep -w NAME= | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
+dist=$(cat /etc/os-release | grep ^NAME= | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
 
 echo "Detected distro: $dist"
 
