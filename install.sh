@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -o pipefail
 
 set -x
 
@@ -12,17 +13,17 @@ IMAGE_STORE=download.redpesk.bzh
 
 echo "This will install RedPesk localbuider on your machine"
 
-dist=$(cat /etc/os-release | grep ^NAME= | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
+dist=$(cat /etc/os-release | grep ^ID= | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
 
 echo "Detected distro: $dist"
 
 case $dist in
-Ubuntu)
+ubuntu)
 	echo "Installing LXD ..."
 	sudo apt install lxd jq
 	;;
-Fedora)
-	if [ "$id -nG " | grep -qw lxd ]; then
+fedora)
+    if id -nG | grep -qw lxd ; then
 		echo "LXD already installed ..."
 	else
 		sudo dnf remove lxc
@@ -35,9 +36,9 @@ Fedora)
 		exit
 	fi
 	;;
-"openSUSE Leap")
+opensuse-leap)
 
-	if [ "$id -nG " | grep -qw lxd ]; then
+    if id -nG | grep -qw lxd ; then
 		sudo systemctl start snapd
 		sudo snap refresh
 		sudo snap install lxd
