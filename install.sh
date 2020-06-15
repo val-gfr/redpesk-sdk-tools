@@ -2,6 +2,8 @@
 
 set -e
 
+set -x
+
 if [ "$(id -u)" == "0" ]
   then echo "Some of the installation must not be run as root, please execute as normal user, you will prompted for root password when needed"; exit
 fi
@@ -17,7 +19,7 @@ echo "Detected distro: $dist"
 case $dist in
 Ubuntu)
 	echo "Installing LXD ..."
-	sudo apt install lxd
+	sudo apt install lxd jq
 	;;
 Fedora)
 	if [ "$id -nG " | grep -qw lxd ]; then
@@ -26,7 +28,7 @@ Fedora)
 		sudo dnf remove lxc
 		# Now install LXD
 		sudo dnf copr enable ganto/lxc3
-		sudo dnf install lxc lxd
+		sudo dnf install lxc lxd jq
 		sudo systemctl enable --now lxc lxd
 		sudo usermod -aG lxd ${USER}
 		echo "Please close your session and open a new one, and restart the script"
@@ -44,6 +46,7 @@ Fedora)
 		sudo zypper –gpg-auto-import-keys refresh
 		sudo zypper dup –from snappy
 		sudo zypper install snapd
+		sudo zypper install jq
 		sudo systemctl enable snapd
 		sudo usermod -aG lxd ${USER}
 
@@ -107,20 +110,17 @@ lxc profile create redpesk
 # Add /dev/loop-control device to support mock 2.x
 lxc profile device add redpesk loop-control unix-char path=/dev/loop-control
 lxc profile set redpesk security.nesting true
-lxc profile set redpesk security.syscalls.blacklist "keyctl errno 38\nkeyctl_chown
-errno 38"
+lxc profile set redpesk security.syscalls.blacklist "keyctl errno 38\nkeyctl_chown errno 38"
 
 # Setup the LXC container
 
 read -p "Please enter a name for you container (or press enter for keeping it as 'redpesk-builder')" container_name
 
-if [ x$container_name == x"" ]; then
-	container_name = redpesk-builder
+if [ "x$container_name" = "x" ]; then
+	export container_name=redpesk-builder
 fi
 
-lxc launch iotbzh:redpesk-pkg/28 ${container_name} -p default -p redpesk
-
-lxc network list-leases lxdbr0
+lxc launch iotbzh:redpesk-builder/28 ${container_name} -p default -p redpesk
 
 MY_IP_ADD_RESS=$(lxc ls --format json |jq -r '.
 [0].state.network.eth0.addresses[0].address')
@@ -128,4 +128,6 @@ echo "${MY_IP_ADD_RESS} ${container_name}" | sudo tee -a /etc/hosts
 echo "${MY_IP_ADD_RESS} ${container_name}-$USER" | sudo tee -a /etc/hosts
 
 echo "Container "$container_name" successfully created ! You can log in it with 'ssh devel@$container_name'"
+
+
 
