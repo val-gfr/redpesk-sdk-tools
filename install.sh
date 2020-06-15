@@ -31,7 +31,7 @@ Fedora)
 		sudo dnf install lxc lxd jq
 		sudo systemctl enable --now lxc lxd
 		sudo usermod -aG lxd ${USER}
-		echo "Please close your session and open a new one, and restart the script"
+		echo "Please close your session and open a new one, then restart the script"
 		exit
 	fi
 	;;
@@ -50,12 +50,13 @@ Fedora)
 		sudo systemctl enable snapd
 		sudo usermod -aG lxd ${USER}
 
-		echo "Please close your session and open a new one, and restart the script"
+		echo "Please close your session and open a new one, then restart the script"
 		exit
 	fi
 	;;
 *)
-	echo "$dist in not supported"
+	echo "$dist is not a supported distribution!"
+    exit 1
 	;;
 esac
 
@@ -95,11 +96,11 @@ profiles:
 cluster: null
 EOF
 
-echo "Allow user ID remap"
+echo "Allow user ID remapping"
 
 sudo echo "root:$(id -u):1" | sudo tee -a /etc/subuid /etc/subgid
 
-echo "Add LXD image store: '$IMAGE_STORE'"
+echo "Adding the LXD image store: '$IMAGE_STORE'"
 lxc remote add iotbzh $IMAGE_STORE
 
 echo "Create a RedPesk LXD Profile"
@@ -114,7 +115,7 @@ lxc profile set redpesk security.syscalls.blacklist "keyctl errno 38\nkeyctl_cho
 
 # Setup the LXC container
 
-read -p "Please enter a name for you container (or press enter for keeping it as 'redpesk-builder')" container_name
+read -p "Please enter a name for you container (or press enter to keep it as 'redpesk-builder') " container_name
 
 if [ "x$container_name" = "x" ]; then
 	export container_name=redpesk-builder
