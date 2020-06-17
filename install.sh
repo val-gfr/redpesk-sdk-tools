@@ -111,6 +111,7 @@ EOF
 echo "Allow user ID remapping"
 
 sudo echo "$USER:$(id -u):1" | sudo tee -a /etc/subuid /etc/subgid
+sudo echo "root:100000:65536" | sudo tee -a /etc/subuid /etc/subgid
 
 echo "Adding the LXD image store: '$IMAGE_STORE'"
 lxc remote add iotbzh $IMAGE_STORE
@@ -120,8 +121,6 @@ echo "Create a RedPesk LXD Profile"
 # Created only once
 lxc profile create redpesk
 
-# Add /dev/loop-control device to support mock 2.x
-lxc profile device add redpesk loop-control unix-char path=/dev/loop-control
 lxc profile set redpesk security.nesting true
 lxc profile set redpesk security.syscalls.blacklist "keyctl errno 38\nkeyctl_chown errno 38"
 
