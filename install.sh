@@ -3,13 +3,24 @@
 set -e
 set -o pipefail
 
-set -x
+default_container_name=redpesk-builder
+IMAGE_STORE=download.redpesk.bzh
 
-if [ "$(id -u)" == "0" ]
-  then echo "Some of the installation must not be run as root, please execute as normal user, you will prompted for root password when needed"; exit
+function clean {
+	set +e
+	lxc delete $default_container_name --force
+	lxc profile delete redpesk
+	lxc remote remove iotbzh
+}
+
+
+if [ "$(id -u)" == "0" ]; then
+	echo "Some of the installation must not be run as root, please execute as normal user, you will prompted for root password when needed"
+	exit
 fi
 
-IMAGE_STORE=download.redpesk.bzh
+
+function setup {
 
 echo "This will install RedPesk localbuider on your machine"
 
@@ -23,7 +34,7 @@ ubuntu)
 	sudo apt install lxd jq
 	;;
 fedora)
-    if id -nG | grep -qw lxd ; then
+	if id -nG | grep -qw lxd ; then
 		echo "LXD already installed ..."
 	else
 		sudo dnf remove lxc
@@ -38,7 +49,7 @@ fedora)
 	;;
 opensuse-leap)
 
-    if id -nG | grep -qw lxd ; then
+	if id -nG | grep -qw lxd ; then
 		sudo systemctl start snapd
 		sudo snap refresh
 		sudo snap install lxd
@@ -99,7 +110,7 @@ EOF
 
 echo "Allow user ID remapping"
 
-sudo echo "root:$(id -u):1" | sudo tee -a /etc/subuid /etc/subgid
+sudo echo "$USER:$(id -u):1" | sudo tee -a /etc/subuid /etc/subgid
 
 echo "Adding the LXD image store: '$IMAGE_STORE'"
 lxc remote add iotbzh $IMAGE_STORE
@@ -119,17 +130,41 @@ lxc profile set redpesk security.syscalls.blacklist "keyctl errno 38\nkeyctl_cho
 read -p "Please enter a name for you container (or press enter to keep it as 'redpesk-builder') " container_name
 
 if [ "x$container_name" = "x" ]; then
-	export container_name=redpesk-builder
+	export container_name=$default_container_name
 fi
 
 lxc launch iotbzh:redpesk-builder/28 ${container_name} -p default -p redpesk
 
-MY_IP_ADD_RESS=$(lxc ls --format json |jq -r '.
-[0].state.network.eth0.addresses[0].address')
+# Wait for ipv4 address to be available
+while true;
+do
+
+	MY_IP_ADD_RES_TYPE=$(lxc ls --format json |jq -r '.
+	[0].state.network.eth0.addresses[0].family')
+
+	if [ $MY_IP_ADD_RES_TYPE != "inet" ] ; then
+		echo 'waiting for IPv4 address'
+		sleep 1
+		continue
+	fi
+
+	MY_IP_ADD_RESS=$(lxc ls --format json |jq -r '.
+	[0].state.network.eth0.addresses[0].address')
+
+	break;
+done
+
 echo "${MY_IP_ADD_RESS} ${container_name}" | sudo tee -a /etc/hosts
 echo "${MY_IP_ADD_RESS} ${container_name}-$USER" | sudo tee -a /etc/hosts
 
 echo "Container "$container_name" successfully created ! You can log in it with 'ssh devel@$container_name'"
 
+}
 
+
+if [ -z "$1" ]; then
+	setup
+else
+	$1
+fi
 
