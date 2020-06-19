@@ -1,21 +1,36 @@
 #!/bin/bash
 
+# Author: Thierry Bultel (thierry.bultel@iot.bzh)
+# License: Apache 2
+
 set -e
 set -o pipefail
 
 default_container_name=redpesk-builder
 IMAGE_STORE=download.redpesk.bzh
 
+function clean_subxid {
+	for f in /etc/subuid /etc/subgid; do
+		sudo sed -i -e "/^$USER:$(id -u):1/d" -e "/^root:100000:65536/d" -e "/^root:1000:1/d" $f
+	done
+}
+
+function clean_hosts {
+	sudo sed -i -e "/$default_container_name$/d" -e "/$default_container_name-$USER$/d" /etc/hosts
+}
+
 function clean {
 	set +e
+	clean_subxid /dev/null 2>&1
+	clean_hosts /dev/null 2>&1
 	echo "Stopping $default_container_name"
-	lxc stop $default_container_name --force
+	lxc stop $default_container_name --force > /dev/null 2>&1
 	echo "Deleting $default_container_name"
-	lxc delete $default_container_name --force
+	lxc delete $default_container_name --force > /dev/null 2>&1
 	echo "Delete redpesk profile"
-	lxc profile delete redpesk
+	lxc profile delete redpesk > /dev/null 2>&1
 	echo "Remove iotbzh image store"
-	lxc remote remove iotbzh
+	lxc remote remove iotbzh > /dev/null 2>&1
 	echo "Clean done"
 }
 
@@ -24,6 +39,7 @@ if [ "$(id -u)" == "0" ]; then
 	echo "Some of the installation must not be run as root, please execute as normal user, you will prompted for root password when needed"
 	exit
 fi
+
 
 
 function setup {
@@ -189,6 +205,7 @@ You can log in it with 'ssh devel@$container_name'"
 
 
 if [ -z "$1" ]; then
+	clean
 	setup
 else
 	$1
