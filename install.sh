@@ -8,9 +8,15 @@ IMAGE_STORE=download.redpesk.bzh
 
 function clean {
 	set +e
+	echo "Stopping $default_container_name"
+	lxc stop $default_container_name --force
+	echo "Deleting $default_container_name"
 	lxc delete $default_container_name --force
+	echo "Delete redpesk profile"
 	lxc profile delete redpesk
+	echo "Remove iotbzh image store"
 	lxc remote remove iotbzh
+	echo "Clean done"
 }
 
 
@@ -43,7 +49,9 @@ fedora)
 		sudo dnf install lxc lxd jq
 		sudo systemctl enable --now lxc lxd
 		sudo usermod -aG lxd ${USER}
-		echo "Please close your session and open a new one, then restart the script"
+		sudo sed -i -e 's:systemd.unified_cgroup_hierarchy=0 ::' -e 's:rhgb:systemd.unified_cgroup_hierarchy=0 rhgb:' grub /etc/default/grub
+		sudo grub2-mkconfig -o /etc/grub2.cfg
+		echo "Please reboot, then restart the script"
 		exit
 	fi
 	;;
@@ -61,7 +69,6 @@ opensuse-leap)
 		sudo zypper install jq
 		sudo systemctl enable snapd
 		sudo usermod -aG lxd ${USER}
-
 		echo "Please close your session and open a new one, then restart the script"
 		exit
 	fi
@@ -112,6 +119,9 @@ echo "Allow user ID remapping"
 
 sudo echo "$USER:$(id -u):1" | sudo tee -a /etc/subuid /etc/subgid
 sudo echo "root:100000:65536" | sudo tee -a /etc/subuid /etc/subgid
+sudo echo "root:1000:1" | sudo tee -a /etc/subuid /etc/subgid
+
+sudo systemctl restart lxd
 
 echo "Adding the LXD image store: '$IMAGE_STORE'"
 lxc remote add iotbzh $IMAGE_STORE
@@ -126,7 +136,7 @@ lxc profile set redpesk security.syscalls.blacklist "keyctl errno 38\nkeyctl_cho
 
 # Setup the LXC container
 
-read -p "Please enter a name for you container (or press enter to keep it as 'redpesk-builder') " container_name
+read -p "Please enter a name for you container (or press enter to keep it as '$default_container_name') " container_name
 
 if [ "x$container_name" = "x" ]; then
 	export container_name=$default_container_name
@@ -153,10 +163,27 @@ do
 	break;
 done
 
+echo "Container ${container_name} operational. Remaining few last steps ..."
+
+echo "Mapping .ssh directory"
+lxc config device add ${container_name} my_ssh disk source=~/.ssh path=/home/devel/.ssh
+
+read -p "Extra host directory to map? It will be mapped under /home/devel/<my_dir> \
+in container (Just hit enter for doing nothing)" directory
+
+if [ "x$directory" != "x" ]; then
+	lxc config device add ${container_name} my_dir disk source=$directory path=/home/devel/$(basename $directory)
+fi
+
+lxc config set ${container_name} raw.idmap "$(echo -e "uid $(id -u) 1000\ngid $(id -g) 1000")"
+
+lxc restart ${container_name}
+
 echo "${MY_IP_ADD_RESS} ${container_name}" | sudo tee -a /etc/hosts
 echo "${MY_IP_ADD_RESS} ${container_name}-$USER" | sudo tee -a /etc/hosts
 
-echo "Container "$container_name" successfully created ! You can log in it with 'ssh devel@$container_name'"
+echo "Container "$container_name \(${MY_IP_ADD_RESS}\)" successfully created ! \
+You can log in it with 'ssh devel@$container_name'"
 
 }
 
