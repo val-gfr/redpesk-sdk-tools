@@ -16,17 +16,30 @@ function clean_subxid {
 }
 
 function clean_hosts {
-	sudo sed -i -e "/$default_container_name$/d" -e "/$default_container_name-$USER$/d" /etc/hosts
+	container=$1
+	sudo sed -i -e "/$container$/d" -e "/$container-$USER$/d" /etc/hosts
 }
 
 function clean {
 	set +e
+
+	container=$1
+
 	clean_subxid /dev/null 2>&1
-	clean_hosts /dev/null 2>&1
-	echo "Stopping $default_container_name"
-	lxc stop $default_container_name --force > /dev/null 2>&1
-	echo "Deleting $default_container_name"
-	lxc delete $default_container_name --force > /dev/null 2>&1
+	clean_hosts $container /dev/null 2>&1
+
+	if [ $(lxc list -cn --format csv | grep $1) ]; then
+		read -p "Container $container exists and will be destroyed, are you sure ? (y/N)" choice
+		if [ "x$choice" != "xy" ]; then exit
+		fi
+
+		echo "Stopping $container"
+		lxc stop $1 --force > /dev/null 2>&1
+		echo "Deleting $container"
+		lxc delete $container --force > /dev/null 2>&1
+
+	fi
+
 	echo "Delete redpesk profile"
 	lxc profile delete redpesk > /dev/null 2>&1
 	echo "Remove iotbzh image store"
@@ -43,8 +56,11 @@ fi
 
 
 function setup {
+set -e
 
 echo "This will install RedPesk localbuider on your machine"
+
+container_name=$1
 
 dist=$(cat /etc/os-release | grep ^ID= | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
 
@@ -52,9 +68,10 @@ echo "Detected distro: $dist"
 
 case $dist in
 ubuntu)
-	echo "Installing LXD ..."
-	sudo apt install lxd jq
+	lxc --version &> /dev/null || sudo apt install lxd
+	jq --version &> /dev/null || sudo apt install jq
 	;;
+
 fedora)
 	if id -nG | grep -qw lxd ; then
 		echo "LXD already installed ..."
@@ -71,9 +88,11 @@ fedora)
 		exit
 	fi
 	;;
+
 opensuse-leap)
 
 	if id -nG | grep -qw lxd ; then
+		echo "LXD already installed ..."
 		sudo systemctl start snapd
 		sudo snap refresh
 		sudo snap install lxd
@@ -91,7 +110,7 @@ opensuse-leap)
 	;;
 *)
 	echo "$dist is not a supported distribution!"
-    exit 1
+	exit 1
 	;;
 esac
 
@@ -152,11 +171,7 @@ lxc profile set redpesk security.syscalls.blacklist "keyctl errno 38\nkeyctl_cho
 
 # Setup the LXC container
 
-read -p "Please enter a name for you container (or press enter to keep it as '$default_container_name') " container_name
 
-if [ "x$container_name" = "x" ]; then
-	export container_name=$default_container_name
-fi
 
 lxc launch iotbzh:redpesk-builder/28 ${container_name} -p default -p redpesk
 
@@ -204,10 +219,34 @@ You can log in it with 'ssh devel@$container_name'"
 }
 
 
-if [ -z "$1" ]; then
-	clean
-	setup
-else
-	$1
-fi
+function usage {
+	printf "Usage: \n\
+		$1 create <container_name> -> creates container\n\
+		$1 clean <container_name> -> deletes container and cleanup\n\
+		$1 help -> displays this text\n"
+}
+
+##########
+
+
+case $1 in
+help)
+	usage $0
+	;;
+clean)
+	if [ -z "$2" ]; then
+		echo "Please specify a container name (eg: 'redpesk-builder')"
+		usage $0
+		exit
+	fi
+	clean $2
+	;;
+create)
+	clean $2
+	setup $2
+	;;
+*)
+	usage $0
+	;;
+esac
 
