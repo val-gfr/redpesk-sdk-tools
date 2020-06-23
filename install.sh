@@ -3,10 +3,11 @@
 # Author: Thierry Bultel (thierry.bultel@iot.bzh)
 # License: Apache 2
 
+set -x
+
 set -e
 set -o pipefail
 
-default_container_name=redpesk-builder
 IMAGE_STORE=download.redpesk.bzh
 
 function clean_subxid {
@@ -22,6 +23,12 @@ function clean_hosts {
 
 function clean {
 	set +e
+
+	ret=$(id -nG | grep -qw lxd > /dev/null 2>&1)
+	if [ $? -ne 0 ];  then
+		# Incomplete installation (or no installation at all) , do nothing
+		return
+	fi
 
 	container=$1
 
@@ -60,7 +67,7 @@ set -e
 
 echo "This will install RedPesk localbuider on your machine"
 
-container_name=$1
+container=$1
 
 dist=$(cat /etc/os-release | grep ^ID= | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
 
@@ -68,8 +75,20 @@ echo "Detected distro: $dist"
 
 case $dist in
 ubuntu)
-	lxc --version &> /dev/null || sudo apt install lxd
-	jq --version &> /dev/null || sudo apt install jq
+	if id -nG | grep -qw lxd ; then
+		echo "LXD already installed ..."
+	else
+		lxc --version &> /dev/null || echo "Installing lxd"; sudo apt install lxd
+		jq --version &> /dev/null || echo "Installing jq"; sudo apt install jq
+		sudo groupadd lxd || true
+		sudo usermod -aG lxd $USER
+		read -p "The session now needs to be restarted, all your processes are about to be killed, do it now (you have to restart the script after) (y/N) ?" choice
+		if [ "x$choice" == "xy" ]; then
+			ps aux | grep ^$USER | awk '{print $2}' | xargs kill -9
+		fi
+		# not reached
+		exit
+	fi
 	;;
 
 fedora)
@@ -81,7 +100,7 @@ fedora)
 		sudo dnf copr enable ganto/lxc3
 		sudo dnf install lxc lxd jq
 		sudo systemctl enable --now lxc lxd
-		sudo usermod -aG lxd ${USER}
+		sudo usermod -aG lxd $USER
 		sudo sed -i -e 's:systemd.unified_cgroup_hierarchy=0 ::' -e 's:rhgb:systemd.unified_cgroup_hierarchy=0 rhgb:' grub /etc/default/grub
 		sudo grub2-mkconfig -o /etc/grub2.cfg
 		echo "Please reboot, then restart the script"
@@ -90,6 +109,10 @@ fedora)
 	;;
 
 opensuse-leap)
+
+	read -p "Support of opensuse is currently EXPERIMENTAL and you may encounter problems, are you sure to continue (y/N)?" choice
+	if [ "x$choice" != "xy" ]; then exit
+	fi
 
 	if id -nG | grep -qw lxd ; then
 		echo "LXD already installed ..."
@@ -103,7 +126,7 @@ opensuse-leap)
 		sudo zypper install snapd
 		sudo zypper install jq
 		sudo systemctl enable snapd
-		sudo usermod -aG lxd ${USER}
+		sudo usermod -aG lxd $USER
 		echo "Please close your session and open a new one, then restart the script"
 		exit
 	fi
@@ -156,7 +179,12 @@ sudo echo "$USER:$(id -u):1" | sudo tee -a /etc/subuid /etc/subgid
 sudo echo "root:100000:65536" | sudo tee -a /etc/subuid /etc/subgid
 sudo echo "root:1000:1" | sudo tee -a /etc/subuid /etc/subgid
 
-sudo systemctl restart lxd
+
+if [ "$(which lxd)" == "/usr/bin/lxd" ]; then
+	sudo systemctl restart lxd
+else
+	sudo snap restart lxd
+fi
 
 echo "Adding the LXD image store: '$IMAGE_STORE'"
 lxc remote add iotbzh $IMAGE_STORE
@@ -172,8 +200,7 @@ lxc profile set redpesk security.syscalls.blacklist "keyctl errno 38\nkeyctl_cho
 # Setup the LXC container
 
 
-
-lxc launch iotbzh:redpesk-builder/28 ${container_name} -p default -p redpesk
+lxc launch iotbzh:redpesk-builder/28 $container -p default -p redpesk
 
 # Wait for ipv4 address to be available
 while true;
@@ -191,39 +218,41 @@ do
 	MY_IP_ADD_RESS=$(lxc ls --format json |jq -r '.
 	[0].state.network.eth0.addresses[0].address')
 
+	echo "Got $MY_IP_ADD_RESS"
+
 	break;
 done
 
-echo "Container ${container_name} operational. Remaining few last steps ..."
+echo "Container $container operational. Remaining few last steps ..."
 
 echo "Mapping .ssh directory"
-lxc config device add ${container_name} my_ssh disk source=~/.ssh path=/home/devel/.ssh
+lxc config device add $container my_ssh disk source=~/.ssh path=/home/devel/.ssh
 
 read -p "Extra host directory to map? It will be mapped under /home/devel/<my_dir> \
 in container (Just hit enter for doing nothing)" directory
 
 if [ "x$directory" != "x" ]; then
-	lxc config device add ${container_name} my_dir disk source=$directory path=/home/devel/$(basename $directory)
+	lxc config device add ${container} my_dir disk source=$directory path=/home/devel/$(basename $directory)
 fi
 
-lxc config set ${container_name} raw.idmap "$(echo -e "uid $(id -u) 1000\ngid $(id -g) 1000")"
+lxc config set ${container} raw.idmap "$(echo -e "uid $(id -u) 1000\ngid $(id -g) 1000")"
 
-lxc restart ${container_name}
+lxc restart ${container}
 
-echo "${MY_IP_ADD_RESS} ${container_name}" | sudo tee -a /etc/hosts
-echo "${MY_IP_ADD_RESS} ${container_name}-$USER" | sudo tee -a /etc/hosts
+echo "$MY_IP_ADD_RESS $container" | sudo tee -a /etc/hosts
+echo "$MY_IP_ADD_RESS ${container}-$USER" | sudo tee -a /etc/hosts
 
-echo "Container "$container_name \(${MY_IP_ADD_RESS}\)" successfully created ! \
-You can log in it with 'ssh devel@$container_name'"
+echo "Container "$container \($MY_IP_ADD_RESS\)" successfully created ! \
+You can log in it with 'ssh devel@$container'"
 
 }
 
 
 function usage {
 	printf "Usage: \n\
-		$1 create <container_name> -> creates container\n\
-		$1 clean <container_name> -> deletes container and cleanup\n\
-		$1 help -> displays this text\n"
+		$1 create <container_name>\tcreates container\n\
+		$1 clean <container_name>\tdeletes container and cleans things up\n\
+		$1 help\t\t\tdisplays this text\n"
 }
 
 ##########
