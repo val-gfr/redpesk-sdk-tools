@@ -3,7 +3,7 @@
 Simply launch 
 
 ```
-./install.sh
+./install.sh create <your_container_name>
 ```
 and follow the instructions.
 
@@ -14,12 +14,11 @@ given.
 At the end of the script, you will also be asked for an optionnal host directory that 
 you want to have to access to within the container.
 
-Depending of your host's distribution, you may need to relaunch the script after a reboot.
+Depending of your host's distribution, you may need to relaunch the script after a reboot or not.
 
-The default container name is redpesk-builder
 
 ```
-./install.sh clean
+./install.sh clean <your_container_name>
 ```
 
 can be useful when things go bad.

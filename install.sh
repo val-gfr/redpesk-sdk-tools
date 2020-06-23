@@ -3,8 +3,6 @@
 # Author: Thierry Bultel (thierry.bultel@iot.bzh)
 # License: Apache 2
 
-set -x
-
 set -e
 set -o pipefail
 
