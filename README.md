@@ -29,4 +29,10 @@ ssh devel@${container_name}
 passwd:*devel*
 ```
 
+To set the environnement to compile for aarch64, do:
+
+```
+. /usr/aarch64-linux-gnu/cross-profile-setup-aarch64.sh
+```
+
 
