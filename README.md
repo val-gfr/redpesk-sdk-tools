@@ -16,9 +16,17 @@ you want to have to access to within the container.
 
 Depending of your host's distribution, you may need to relaunch the script after a reboot or not.
 
-
 ```
 ./install.sh clean <your_container_name>
 ```
 
 can be useful when things go bad.
+
+Once the container is created, is is accessible through ssh:
+
+```
+ssh devel@${container_name}
+passwd:*devel*
+```
+
+
