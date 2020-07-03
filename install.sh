@@ -45,8 +45,6 @@ function clean {
 
 	fi
 
-	echo "Delete redpesk profile"
-	lxc profile delete redpesk > /dev/null 2>&1
 	echo "Remove iotbzh image store"
 	lxc remote remove iotbzh > /dev/null 2>&1
 	echo "Clean done"
@@ -135,9 +133,7 @@ opensuse-leap)
 	;;
 esac
 
-
-echo "Configuration of lxd ..."
-
+function lxd_init {
 cat << EOF | lxd init --preseed
 config:
   images.auto_update_interval: "0"
@@ -171,6 +167,16 @@ profiles:
 cluster: null
 EOF
 
+}
+
+
+if lxc network show lxdbr0 | grep -wq ipv4.address; then
+	echo "LXD brigdge already setup, you are likely already owning another container. LXD will not be restarted."
+else
+	echo "1st configuration of lxd ..."
+	lxd_init
+fi
+
 echo "Allow user ID remapping"
 
 sudo echo "$USER:$(id -u):1" | sudo tee -a /etc/subuid /etc/subgid
@@ -187,24 +193,49 @@ fi
 echo "Adding the LXD image store: '$IMAGE_STORE'"
 lxc remote add iotbzh $IMAGE_STORE
 
-echo "Create a RedPesk LXD Profile"
+profile_name=redpesk
+reuse=0
 
-# Created only once
-lxc profile create redpesk
+while true;
+do
+	echo "Checking existing profiles ..."
+	if lxc profile list | grep -qw $profile_name; then
+		read -p "A '$profile_name' profile already exists, (R)euse or (C)reate another one ?" choice
+		case $choice in
+		R)
+			reuse=1
+			break
+		;;
+		C)
+			read -p "Enter the profile name:" profile_name
+			continue
+		;;
+		*) echo "bad choice";;
+		esac
+	else
+		break
+	fi
+done
 
-lxc profile set redpesk security.nesting true
-lxc profile set redpesk security.syscalls.blacklist "keyctl errno 38\nkeyctl_chown errno 38"
+if [ $reuse -eq 1 ]; then
+	echo "Reuse '$profile_name' LXD Profile"
+else
+	echo "Create a '$profile_name' LXD Profile"
+	lxc profile create $profile_name
+fi
+
+lxc profile set $profile_name security.nesting true
+lxc profile set $profile_name security.syscalls.blacklist "keyctl errno 38\nkeyctl_chown errno 38"
 
 # Setup the LXC container
 
-
-lxc launch iotbzh:redpesk-builder/28 $container -p default -p redpesk
+lxc launch iotbzh:redpesk-builder/28 $container -p default -p $profile_name
 
 # Wait for ipv4 address to be available
 while true;
 do
 
-	MY_IP_ADD_RES_TYPE=$(lxc ls --format json |jq -r '.
+	MY_IP_ADD_RES_TYPE=$(lxc ls $container --format json |jq -r '.
 	[0].state.network.eth0.addresses[0].family')
 
 	if [ $MY_IP_ADD_RES_TYPE != "inet" ] ; then
@@ -213,7 +244,7 @@ do
 		continue
 	fi
 
-	MY_IP_ADD_RESS=$(lxc ls --format json |jq -r '.
+	MY_IP_ADD_RESS=$(lxc ls $container --format json |jq -r '.
 	[0].state.network.eth0.addresses[0].address')
 
 	echo "Got $MY_IP_ADD_RESS"
