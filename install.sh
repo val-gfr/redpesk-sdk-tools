@@ -254,6 +254,9 @@ done
 
 echo "Container $container operational. Remaining few last steps ..."
 
+# Fixes the annoying missing suid bit
+lxc exec ${container} chmod +s /usr/bin/ping
+
 echo "Mapping .ssh directory"
 lxc config device add $container my_ssh disk source=~/.ssh path=/home/devel/.ssh
 
