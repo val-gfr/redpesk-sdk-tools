@@ -254,8 +254,14 @@ done
 
 echo "Container $container operational. Remaining few last steps ..."
 
-# Fixes the annoying missing suid bit
+echo "Fixes the annoying missing suid bit on ping"
+
 lxc exec ${container} chmod +s /usr/bin/ping
+
+echo "Switches DNSSEC off"
+
+lxc exec ${container} -- bash -c 'sed -i -e '\''/^DNSSEC/d'\''  /etc/systemd/resolved.conf'
+lxc exec ${container} -- bash -c 'sed -i -e '\''$aDNSSEC=no'\'' /etc/systemd/resolved.conf'
 
 echo "Mapping .ssh directory"
 lxc config device add $container my_ssh disk source=~/.ssh path=/home/devel/.ssh
@@ -273,6 +279,9 @@ lxc restart ${container}
 
 echo "$MY_IP_ADD_RESS $container" | sudo tee -a /etc/hosts
 echo "$MY_IP_ADD_RESS ${container}-$USER" | sudo tee -a /etc/hosts
+
+ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R ""$container""
+
 
 echo "Container "$container \($MY_IP_ADD_RESS\)" successfully created ! \
 You can log in it with 'ssh devel@$container'"
