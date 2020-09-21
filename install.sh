@@ -183,8 +183,8 @@ sudo echo "$USER:$(id -u):1" | sudo tee -a /etc/subuid /etc/subgid
 sudo echo "root:100000:65536" | sudo tee -a /etc/subuid /etc/subgid
 sudo echo "root:1000:1" | sudo tee -a /etc/subuid /etc/subgid
 
-
-if [ "$(which lxd)" == "/usr/bin/lxd" ]; then
+snap list 2>&1 |grep lxd > /dev/null
+if [ "$?" == "1" ]; then
 	sudo systemctl restart lxd
 else
 	sudo snap restart lxd
