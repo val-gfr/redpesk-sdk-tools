@@ -74,9 +74,10 @@ case $dist in
 ubuntu)
 	if id -nG | grep -qw lxd ; then
 		echo "LXD already installed ..."
+		jq --version &> /dev/null || (echo "Installing jq" && sudo apt install jq)
 	else
-		lxc --version &> /dev/null || echo "Installing lxd"; sudo apt install lxd
-		jq --version &> /dev/null || echo "Installing jq"; sudo apt install jq
+		lxc --version &> /dev/null || (echo "Installing lxd" && sudo apt install lxd)
+		jq --version &> /dev/null || (echo "Installing jq" && sudo apt install jq)
 		sudo groupadd lxd || true
 		sudo usermod -aG lxd $USER
 		read -p "The session now needs to be restarted, all your processes are about to be killed, do it now (you have to restart the script after) (y/N) ?" choice
@@ -91,6 +92,7 @@ ubuntu)
 fedora)
 	if id -nG | grep -qw lxd ; then
 		echo "LXD already installed ..."
+		jq --version &> /dev/null || (echo "Installing jq" && sudo dnf install jq)
 	else
 		sudo dnf remove lxc
 		# Now install LXD
@@ -116,6 +118,7 @@ opensuse-leap)
 		sudo systemctl start snapd
 		sudo snap refresh
 		sudo snap install lxd
+		jq --version &> /dev/null || (echo "Installing jq" && sudo zypper install jq)
 	else
 		sudo zypper addrepo --refresh https://download.opensuse.org/repositories/system:/snappy/openSUSE_Leap_15.1 snappy
 		sudo zypper –gpg-auto-import-keys refresh
@@ -184,12 +187,7 @@ sudo echo "$USER:$(id -u):1" | sudo tee -a /etc/subuid /etc/subgid
 sudo echo "root:100000:65536" | sudo tee -a /etc/subuid /etc/subgid
 sudo echo "root:1000:1" | sudo tee -a /etc/subuid /etc/subgid
 
-snap list 2>&1 | grep lxd > /dev/null
-if [ "$?" != "0" ]; then
-	sudo systemctl restart lxd
-else
-	sudo snap restart lxd
-fi
+[[ `snap list | grep lxd` ]] && sudo snap restart lxd || sudo systemctl restart lxd
 
 echo "Adding the LXD image store: '$IMAGE_STORE'"
 lxc remote add iotbzh $IMAGE_STORE
