@@ -7,6 +7,7 @@ set -e
 set -o pipefail
 
 IMAGE_STORE=download.redpesk.bzh
+GREP=$(which grep)
 
 function clean_subxid {
 	for f in /etc/subuid /etc/subgid; do
@@ -33,7 +34,7 @@ function clean {
 	clean_subxid /dev/null 2>&1
 	clean_hosts $container /dev/null 2>&1
 
-	if [ $(lxc list -cn --format csv | grep -w $1) ]; then
+	if [ $(lxc list -cn --format csv | $GREP -w "^"$1"$") ]; then
 		read -p "Container $container exists and will be destroyed, are you sure ? (y/N)" choice
 		if [ "x$choice" != "xy" ]; then exit
 		fi
