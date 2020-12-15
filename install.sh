@@ -223,12 +223,13 @@ else
 	lxc profile create $profile_name
 fi
 
+lxc profile set $profile_name security.privileged true
 lxc profile set $profile_name security.nesting true
 lxc profile set $profile_name security.syscalls.blacklist "keyctl errno 38\nkeyctl_chown errno 38"
 
 # Setup the LXC container
 
-lxc launch iotbzh:redpesk-builder/28 $container -p default -p $profile_name
+lxc launch iotbzh:redpesk-builder/33 $container -p default -p $profile_name
 
 # Wait for ipv4 address to be available
 while true;
