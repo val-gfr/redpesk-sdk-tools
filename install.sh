@@ -7,6 +7,7 @@ set -e
 set -o pipefail
 
 IMAGE_STORE=download.redpesk.bzh
+IMAGE_STORE_PASSWD="iotbzh"
 GREP=$(which grep)
 
 function clean_subxid {
@@ -190,7 +191,8 @@ sudo echo "root:1000:1" | sudo tee -a /etc/subuid /etc/subgid
 [[ `snap list | grep lxd` ]] && sudo snap restart lxd || sudo systemctl restart lxd
 
 echo "Adding the LXD image store: '$IMAGE_STORE'"
-lxc remote add iotbzh $IMAGE_STORE
+lxc remote add iotbzh $IMAGE_STORE --password "$IMAGE_STORE_PASSWD" \
+    --accept-certificate
 
 profile_name=redpesk
 reuse=0
