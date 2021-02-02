@@ -32,5 +32,5 @@ passwd:*devel*
 To set the environnement to compile for aarch64, do:
 
 ```bash
-. /usr/aarch64-linux-gnu/cross-profile-setup-aarch64.sh
+. /usr/aarch64-linux-gnu/bin/cross-profile-setup-aarch64.sh
 ```
