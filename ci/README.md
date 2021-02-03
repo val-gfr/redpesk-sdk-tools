@@ -1,6 +1,21 @@
 # Vagrant CI
 
+This directory contains the infrastructure used to regression test the installer
+script using Vagrant. This allows to easily setup multiple virtual machine test
+environments to validate the script.
+
+Below are instructions to run the full set of tests or to develop the script in
+this environment.
+
 ## How to setup your Vagrant CI
+
+### Host setup
+
+You will need to install Vagrant from https://www.vagrantup.com/ as well as
+VirtualBox (used as a Vagrant provider).
+
+This setup has been tested with Vagrant 2.2.14 and VirtualBox 6.1.16 on Fedora
+33.
 
 ### Select your OS
 
@@ -18,41 +33,46 @@ OS=fedora_32
 OS=fedora_33
 ```
 
-### Quick test
+### Quick test/regression testing
 
-For a quick test just do:
+For a quick test or to run the tests, just do:
 
 ```bash
 cd ${OS_FAMILY}/${OS}
 vagrant up
 ```
 
-### Init your Vagrant VM
+This will create a virtual machine, configure it with the `install.sh` script and run the
+associated tests.
+
+### Init your Vagrant virtual machine 
 
 ```bash
 cd ${OS_FAMILY}/${OS}
 vagrant up --no-provision
-#Save your initial stat
+#Save your initial state via a VM snapshot
 vagrant snapshot save ${OS}
 ```
 
 ### Execute your test
 
-In one command line exec your test
+In one command line execute your test
 
 ```bash
-vagrant up --no-provision
 vagrant provision
 ```
 
 ### Clean up your mess
 
-This will reset all your change:
+This will reset all your changes and restore the VM to a clean state, before any
+configuration was done.
 
 ```bash
-vagrant snapshot restore ${OS} --no-provision
+vagrant snapshot restore ${OS}
 vagrant halt
 ```
+
+The VM will still be there if needed, bring it up w/ `vagrant up` again.
 
 ### Debug your Vagrant CI
 
@@ -62,8 +82,12 @@ You can easily debug your Vagrant CI with the command:
 vagrant ssh
 ```
 
-### Clean every thing
+This logs you into the VM as the `vagrant` user, which has passwordless sudo rights.
+
+### Clean everything
 
 ```bash
 vagrant destroy
 ```
+
+At this point, the VM is gone and can be recreated with `vagrant up`.

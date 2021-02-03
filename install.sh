@@ -2,7 +2,7 @@
 ###########################################################################
 # Copyright (C) 2020, 2021 IoT.bzh
 #
-# Authors:    Thierry Bultel <thierry.bultel@iot.bzh>
+# Authors:   Thierry Bultel <thierry.bultel@iot.bzh>
 #            Ronan Le Martret <ronan.lemartret@iot.bzh>
 #            Vincent Rubiolo <vincent.rubiolo@iot.bzh>
 #
@@ -24,12 +24,13 @@ set -o pipefail
 
 function usage {
     printf "Usage: \n\
-        %s config_host\t Install and configure Lxc on your host\n\
+        %s config_host\t Install and configure LXC/LXD on your host\n\
         %s create -c <container_name>\tcreates container\n\
         %s clean -c <container_name>\tdeletes container and cleans things up\n\
         \n\
-        -c|--container_name\t:\tgive the container name\n\
-        -n|--non-interactive\t:\trun the script in a non-interactive mode\n\
+        -c|--container-name\t: give the container name\n\
+        -t|--container-type\t: container type to install (default: localbuilder)\n\
+        -a|--non-interactive\t: run the script in non-interactive mode\n\
         \n\
         %s --help\t\t\tdisplays this text\n" "$0" "$0" "$0" "$0"
     exit
@@ -44,9 +45,17 @@ IMAGE_REMOTE="iotbzh"
 IMAGE_STORE="download.redpesk.bzh"
 IMAGE_STORE_PASSWD="iotbzh"
 
-IMAGE_SPEC="${IMAGE_REMOTE}:redpesk-builder/33"
 PROFILE_NAME="redpesk"
 CONTAINER_NAME=""
+CONTAINER_TYPE="localbuilder"
+
+# List of supported container types. Right now we have a fixed list of aliases
+# but an improvement could be to also allow a container flavour out of that list
+# provided it's available on the targeted LXD store. This would provide an easy
+# way for people to use the script with their own containers
+declare -A CONTAINER_FLAVOURS
+CONTAINER_FLAVOURS=( ["localbuilder"]="redpesk-builder/33" \
+                     ["cloud-publication"]="redpesk-cloud-publication" )
 DEFAULT_CNTNR_DIR=${HOME}/my_rp_builder_dir
 INTERACTIVE="yes"
 
@@ -58,11 +67,15 @@ LXD=""
 while [[ $# -gt 0 ]];do
     key="$1"
     case $key in
-    -c|--container_name)
+    -c|--container-name)
         CONTAINER_NAME="$2";
         shift 2;
     ;;
-    -n|--non-interactive)
+    -t|--container-type)
+        CONTAINER_TYPE="$2";
+        shift 2;
+    ;;
+    -a|--non-interactive)
         INTERACTIVE="no";
         shift;
     ;;
@@ -163,7 +176,7 @@ function check_distribution {
     esac
 }
 
-function check_container_name {
+function check_container_name_and_type {
     if [ -z "${CONTAINER_NAME}" ]; then
         echo -e "${RED}Error${NORMAL}: no container name given"
         echo -e "Please specify a container name (eg: 'redpesk-builder')"
@@ -173,6 +186,22 @@ function check_container_name {
     RESULT=$(echo "${CONTAINER_NAME}" | grep -E '^[[:alnum:]][-[:alnum:]]{0,61}[[:alnum:]]$')
     if [ -z "${RESULT}" ] ; then
         echo -e "${RED}Error${NORMAL}: Invalid instance Name can only contain alphanumeric and hyphen characters"
+        exit 1
+    fi
+
+    TYPE_MATCH="0"
+    for CTYPE in "${!CONTAINER_FLAVOURS[@]}"; do
+        if [[ "$CONTAINER_TYPE" == "$CTYPE" ]]; then
+            TYPE_MATCH="1"
+        fi
+    done
+    if [[ "$TYPE_MATCH" == 0 ]]; then
+        echo -e "${RED}Error${NORMAL}: invalid container type $CONTAINER_TYPE!"
+        echo -e -n "Supported types are: "
+        for CTYPE in "${!CONTAINER_FLAVOURS[@]}"; do
+            echo -n "$CTYPE "
+        done
+        echo
         exit 1
     fi
 }
@@ -206,7 +235,7 @@ function clean_lxc_container {
         fi
 
         echo "Stopping ${CONTAINER_NAME}"
-        ${LXC} stop "${CONTAINER_NAME}" --force > /dev/null 2>&1 || echo "Error during stopping container"
+        ${LXC} stop "${CONTAINER_NAME}" --force > /dev/null 2>&1 || echo "Error during container stop phase"
         echo "Deleting ${CONTAINER_NAME}"
         ${LXC} delete "${CONTAINER_NAME}" --force > /dev/null 2>&1
     fi
@@ -216,7 +245,7 @@ function clean_lxc_container {
         ${LXC} remote remove "${IMAGE_REMOTE}" > /dev/null 2>&1
     fi
 
-    echo "Clean done"
+    echo "Cleanup done"
 }
 
 function config_host_group {
@@ -517,6 +546,20 @@ function setup_repositories {
     echo "Mapping of host directories to retrieve your files in the container"
 }
 
+
+function setup_port_redirections {
+    # Certain containers need custom port redirections. We set them up here.
+
+    # Expose port 30003 in the cloud publication container to the outside world
+    # on port 21212. Note: both port numbers need to match the systemd service
+    # file within the container and the port used by the binder on the target to
+    # reach the host, respectively.
+    if [[ "$CONTAINER_TYPE" == "cloud-publication" ]]; then
+        ${LXC} config device add ${CONTAINER_NAME} redis-cloud-api proxy \
+            listen=tcp:0.0.0.0:21212 connect=tcp:127.0.0.1:30003
+    fi
+}
+
 function setup_container_ip {
     # Wait for ipv4 address to be available
     COUNTER=0
@@ -564,7 +607,7 @@ function setup_hosts {
 }
 
 function setup_lxc_container {
-    echo "This will install RedPesk localbuider on your machine"
+    echo "This will install the ${CONTAINER_NAME} container on your machine"
 
     setup_init_lxd
 
@@ -577,8 +620,11 @@ function setup_lxc_container {
     setup_profile
 
     # Setup the LXC container
-    #The command "< /dev/null" is a walk around to avoid issue (on running this script on "vagrant provision" -> yaml: unmarshal errors )
-	#https://github.com/lxc/lxd/issues/6188#issuecomment-572248426
+    #The command "< /dev/null" is a workaround to avoid issue on running this
+    #script using "vagrant provision" (where this fails with: yaml: unmarshal
+    #errors)
+	#see https://github.com/lxc/lxd/issues/6188#issuecomment-572248426
+    IMAGE_SPEC="${IMAGE_REMOTE}:${CONTAINER_FLAVOURS[$CONTAINER_TYPE]}"
     ${LXC} launch "${IMAGE_SPEC}" "${CONTAINER_NAME}" --profile default --profile "${PROFILE_NAME}" < /dev/null
 
     setup_container_ip
@@ -590,6 +636,8 @@ function setup_lxc_container {
     setup_ssh
 
     setup_repositories
+
+    setup_port_redirections
 
     ${LXC} restart "${CONTAINER_NAME}"
 
@@ -610,7 +658,7 @@ help)
 clean)
     check_lxc
     check_lxd
-    check_container_name
+    check_container_name_and_type
     clean_lxc_container
     ;;
 config_host)
@@ -619,11 +667,18 @@ config_host)
 create)
     check_lxc
     check_lxd
-    check_container_name
+    check_container_name_and_type
     clean_lxc_container
     setup_lxc_container
     ;;
 *)
+
+    if [[ -z "${MAIN_CMD}" ]]; then
+        echo -e "${RED}Error${NORMAL}: no action specified! You must provide one."
+    else
+        echo -e "${RED}Error${NORMAL}: unknown action type '${MAIN_CMD}' !"
+    fi
+    echo
     usage
     ;;
 esac
