@@ -555,7 +555,7 @@ function setup_port_redirections {
     # file within the container and the port used by the binder on the target to
     # reach the host, respectively.
     if [[ "$CONTAINER_TYPE" == "cloud-publication" ]]; then
-        ${LXC} config device add ${CONTAINER_NAME} redis-cloud-api proxy \
+        ${LXC} config device add "${CONTAINER_NAME}" redis-cloud-api proxy \
             listen=tcp:0.0.0.0:21212 connect=tcp:127.0.0.1:30003
     fi
 }
