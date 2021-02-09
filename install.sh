@@ -114,12 +114,10 @@ DISTRIB_VERSION=$(grep ^VERSION_ID= /etc/os-release | cut -d '=' -f2 | sed -e 's
 
 function error() {
     echo "FAIL: $*" >&2
-    cleanup
 }
 
 function debug() {
     echo "DEBUG: $*" >&2
-    cleanup
 }
 
 function check_user {
@@ -421,6 +419,17 @@ function setup_remote {
             --accept-certificate
 }
 
+function check_image_availability {
+    IMAGE_TO_TEST="$1"
+    for i in $(${LXC} image list "${IMAGE_REMOTE}": --columns l --format csv); do
+        if [ "${i}" == "${IMAGE_TO_TEST}" ]; then
+            return 0
+        fi
+    done
+    error "Image '${IMAGE_TO_TEST}' is not present in remote server '${IMAGE_REMOTE}'"
+    exit 1
+}
+
 function setup_profile {
     reuse="false"
     COUNTER=0
@@ -639,6 +648,8 @@ function setup_lxc_container {
     setup_remote
 
     setup_profile
+
+    check_image_availability "${CONTAINER_FLAVOURS[$CONTAINER_TYPE]}"
 
     # Setup the LXC container
     #The command "< /dev/null" is a workaround to avoid issue on running this
