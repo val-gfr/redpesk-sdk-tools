@@ -686,6 +686,7 @@ config_host)
     config_host
     ;;
 create)
+    config_host
     check_lxc
     check_lxd
     check_container_name_and_type
