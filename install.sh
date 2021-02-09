@@ -29,7 +29,10 @@ function usage {
         %s clean -c <container_name>\tdeletes container and cleans things up\n\
         \n\
         -c|--container-name\t: give the container name\n\
-        -t|--container-type\t: container type to install (default: localbuilder)\n\
+        -t|--container-type\t: container type to install [localbuilder|cloud-publication] (default: ${CONTAINER_TYPE_DEFAULT})\n\
+        -i|--container-image\t: image name of the container to use \n\
+                                    (default for container-type 'localbuilder' ${CONTAINER_LB_IMAGE_DEFAULT})\n\
+                                    (default for container-type 'cloud-publication' ${CONTAINER_CP_IMAGE_DEFAULT})\n\
         -a|--non-interactive\t: run the script in non-interactive mode\n\
         \n\
         %s --help\t\t\tdisplays this text\n" "$0" "$0" "$0" "$0"
@@ -47,15 +50,16 @@ IMAGE_STORE_PASSWD="iotbzh"
 
 PROFILE_NAME="redpesk"
 CONTAINER_NAME=""
-CONTAINER_TYPE="localbuilder"
+CONTAINER_TYPE=""
+CONTAINER_TYPE_DEFAULT="localbuilder"
+CONTAINER_IMAGE=""
+CONTAINER_LB_IMAGE_DEFAULT="redpesk-builder/33"
+CONTAINER_CP_IMAGE_DEFAULT="redpesk-cloud-publication"
 
-# List of supported container types. Right now we have a fixed list of aliases
-# but an improvement could be to also allow a container flavour out of that list
-# provided it's available on the targeted LXD store. This would provide an easy
-# way for people to use the script with their own containers
+# List of supported container types.
 declare -A CONTAINER_FLAVOURS
-CONTAINER_FLAVOURS=( ["localbuilder"]="redpesk-builder/33" \
-                     ["cloud-publication"]="redpesk-cloud-publication" )
+CONTAINER_FLAVOURS=( ["localbuilder"]="${CONTAINER_LB_IMAGE_DEFAULT}" \
+                     ["cloud-publication"]="${CONTAINER_CP_IMAGE_DEFAULT}" )
 DEFAULT_CNTNR_DIR=${HOME}/my_rp_builder_dir
 INTERACTIVE="yes"
 
@@ -75,6 +79,10 @@ while [[ $# -gt 0 ]];do
         CONTAINER_TYPE="$2";
         shift 2;
     ;;
+    -i|--container-image)
+        CONTAINER_IMAGE="$2";
+        shift 2;
+    ;;
     -a|--non-interactive)
         INTERACTIVE="no";
         shift;
@@ -92,6 +100,14 @@ while [[ $# -gt 0 ]];do
     ;;
     esac
 done
+
+if [ -z "${CONTAINER_TYPE}" ]; then
+    CONTAINER_TYPE="${CONTAINER_TYPE_DEFAULT}"
+fi
+
+if [ -n "${CONTAINER_IMAGE}" ]; then
+    CONTAINER_FLAVOURS[$CONTAINER_TYPE]="${CONTAINER_IMAGE}"
+fi
 
 DISTRIB=$(grep ^ID= /etc/os-release | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
 DISTRIB_VERSION=$(grep ^VERSION_ID= /etc/os-release | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
@@ -563,7 +579,7 @@ function setup_port_redirections {
 function setup_container_ip {
     # Wait for ipv4 address to be available
     COUNTER=0
-    COUNTER_MAX=100
+    COUNTER_MAX=10
     while [  "${COUNTER}" -lt "${COUNTER_MAX}" ];do
         echo "Try to get IP: ${COUNTER}/${COUNTER_MAX}"
         COUNTER=$(( "${COUNTER}" + 1 ))
