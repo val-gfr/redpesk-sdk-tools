@@ -402,6 +402,9 @@ function restart_lxd {
     else
         sudo systemctl restart lxd
     fi
+    #From time to time DNS resolution fails just after starting the LXD service.
+    #Add a sleep prevent dns resolution issue.
+    sleep 1;
 }
 
 function setup_subgid {
