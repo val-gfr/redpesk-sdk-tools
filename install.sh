@@ -430,7 +430,9 @@ function setup_profile {
         COUNTER=$(( "${COUNTER}" + 1 ))
         echo "Checking existing profiles ..."
         echo "Try to Check profiles: ${COUNTER}/${COUNTER_MAX}"
-        if ${LXC} profile list | grep -qw ${PROFILE_NAME}; then
+
+        PROFILE_EXIST=$(${LXC} profile list | grep ${PROFILE_NAME} || echo "") #Prevent exit 1 if no match
+        if [ -n "${PROFILE_EXIST}" ]; then
             if [ "${INTERACTIVE}" == "yes" ]; then
                 read -r -p "A '${PROFILE_NAME}' profile already exists, (R)euse or (C)reate another one ?[Rc]" choice
             fi
