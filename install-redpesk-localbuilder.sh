@@ -48,6 +48,11 @@ IMAGE_REMOTE="iotbzh"
 IMAGE_STORE="download.redpesk.bzh"
 IMAGE_STORE_PASSWD="iotbzh"
 
+CONTAINER_USER=devel
+CONTAINER_GRP=devel
+CONTAINER_UID=1000
+CONTAINER_GID=1000
+
 PROFILE_NAME="redpesk"
 CONTAINER_NAME=""
 CONTAINER_TYPE=""
@@ -228,9 +233,9 @@ function check_container_name_and_type {
 
 function clean_subxid {
     echo "cleaning your /etc/subuid /etc/subgid files"
-    for f in /etc/subuid /etc/subgid; do
-        sudo sed -i -e "/^${USER}:$(id -u):1/d" -e "/^root:100000:65536/d" -e "/^root:1000:1/d" $f
-    done
+
+    sudo sed -i -e "/^${USER}:$(id -u):1/d" -e "/^root:100000:65536/d" -e "/^root:${CONTAINER_UID}:1/d" /etc/subuid
+    sudo sed -i -e "/^${USER}:$(id -g):1/d" -e "/^root:100000:65536/d" -e "/^root:${CONTAINER_GID}:1/d" /etc/subgid
 }
 
 function clean_hosts {
@@ -426,9 +431,13 @@ function restart_lxd {
 function setup_subgid {
     echo "Allow user ID remapping"
 
-    sudo echo "${USER}:$(id -u):1" | sudo tee -a /etc/subuid /etc/subgid > /dev/null
+    sudo echo "${USER}:$(id -u):1" | sudo tee -a /etc/subuid > /dev/null
+    sudo echo "${USER}:$(id -g):1" | sudo tee -a /etc/subgid > /dev/null
+
     sudo echo "root:100000:65536" | sudo tee -a /etc/subuid /etc/subgid > /dev/null
-    sudo echo "root:1000:1" | sudo tee -a /etc/subuid /etc/subgid > /dev/null
+
+    sudo echo "root:${CONTAINER_UID}:1" | sudo tee -a /etc/subuid > /dev/null
+    sudo echo "root:${CONTAINER_GID}:1" | sudo tee -a /etc/subgid > /dev/null
 }
 
 function setup_remote {
@@ -515,7 +524,7 @@ function setup_init_lxd {
 
 function setup_ssh {
     SSH_DIR="${HOME}/.ssh"
-    CONTAINER_SSH_DIR="/home/devel/.ssh"
+    CONTAINER_SSH_DIR="/home/${CONTAINER_USER}/.ssh"
     KNOWN_HOSTS_FILE="${SSH_DIR}/known_hosts"
 
     if [ ! -f "${SSH_DIR}" ]; then
@@ -567,7 +576,7 @@ function MapHostDir () {
     var_name=$1
     dir_value=$2
     mkdir -p "${dir_value}"
-    ${LXC} config device add "${CONTAINER_NAME}" my_"${var_name}" disk source="${dir_value}" path="/home/devel/${var_name}"
+    ${LXC} config device add "${CONTAINER_NAME}" my_"${var_name}" disk source="${dir_value}" path="/home/${CONTAINER_USER}/${var_name}"
 }
 
 function setup_repositories {
@@ -668,13 +677,12 @@ function fix_container {
     #Add "DNSSEC=no" At the end of the file /etc/systemd/resolved.conf
     ${LXC} exec "${CONTAINER_NAME}" -- bash -c 'sed -i -e '\''$ aDNSSEC=no'\'' /etc/systemd/resolved.conf'
 
-    ${LXC} config set "${CONTAINER_NAME}" raw.idmap "$(echo -e "uid $(id -u) 1000\ngid $(id -g) 1000")"
+    ${LXC} config set "${CONTAINER_NAME}" raw.idmap "$(echo -e "uid $(id -u) ${CONTAINER_UID}\ngid $(id -g) ${CONTAINER_GID}")"
 }
 
 function setup_hosts {
     echo "Add container IP to your /etc/hosts"
     echo "${MY_IP_ADD_RESS} ${CONTAINER_NAME}" | sudo tee -a /etc/hosts
-    echo "${MY_IP_ADD_RESS} ${CONTAINER_NAME}-${USER}" | sudo tee -a /etc/hosts
 }
 
 function setup_lxc_container {
@@ -719,7 +727,7 @@ function setup_lxc_container {
     setup_hosts
 
     echo -e "Container ${BOLD}${CONTAINER_NAME}${NORMAL} (${MY_IP_ADD_RESS}) successfully created !"
-    echo -e "You can log in it with '${BOLD}ssh devel@${CONTAINER_NAME}${NORMAL}'"
+    echo -e "You can log in it with '${BOLD}ssh ${CONTAINER_USER}@${CONTAINER_NAME}${NORMAL}'"
 }
 
 ##########
