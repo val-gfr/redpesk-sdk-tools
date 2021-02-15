@@ -571,6 +571,12 @@ function MapHostDir () {
 }
 
 function setup_repositories {
+
+    # The cloud publication container does not need any repository mappings
+    if [[ "$CONTAINER_TYPE" == "cloud-publication" ]]; then
+        return
+    fi
+
     echo -e "\nYou will have three repositories in your container (gitsources, gitpkgs, and build)
     If you already have directories in your host, they will be mapped, just have to precise the path.
     And if you don't have directories to map, they will be created by default under: ${BOLD}${DEFAULT_CNTNR_DIR}${NORMAL}\n"
