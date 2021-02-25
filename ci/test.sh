@@ -3,7 +3,7 @@ echo "Testing Redpesk container installer ..."
 
 RUN_DEBUG="bash -x "
 # This path must match that of the Vagrant provisioner
-INSTALL_SCRIPT="/home/vagrant/install.sh"
+INSTALL_SCRIPT="/home/vagrant/install-redpesk-localbuilder.sh"
 
 ${RUN_DEBUG} ${INSTALL_SCRIPT} config_host --non-interactive
 

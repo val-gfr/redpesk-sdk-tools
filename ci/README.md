@@ -42,10 +42,10 @@ cd ${OS_FAMILY}/${OS}
 vagrant up
 ```
 
-This will create a virtual machine, configure it with the `install.sh` script and run the
+This will create a virtual machine, configure it with the `install-redpesk-localbuilder.sh` script and run the
 associated tests.
 
-### Init your Vagrant virtual machine 
+### Init your Vagrant virtual machine
 
 ```bash
 cd ${OS_FAMILY}/${OS}

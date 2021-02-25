@@ -61,6 +61,6 @@ Vagrant.configure("2") do |config|
   #   apt-get update
   #   apt-get install -y apache2
   # SHELL
-  config.vm.provision "file", source: "../../../install.sh", destination: "/home/vagrant/"
+  config.vm.provision "file", source: "../../../install-redpesk-localbuilder.sh", destination: "/home/vagrant/"
   config.vm.provision "shell", path: "../../test.sh", upload_path: "/home/vagrant/test.sh", privileged: false
 end

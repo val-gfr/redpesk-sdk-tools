@@ -2,9 +2,9 @@
 
 ```bash
 # To configure LXD on your host
-./install.sh config_host
+./install-redpesk-localbuilder.sh config_host
 # To Install the container
-./install.sh create -c <your_container_name>
+./install-redpesk-localbuilder.sh create -c <your_container_name>
 ```
 
 and follow the instructions.
@@ -17,7 +17,7 @@ you want to have to access to within the container.
 Depending of your host distribution, you may need to relaunch the script after a reboot or not.
 
 ```bash
-./install.sh clean -c <your_container_name>
+./install-redpesk-localbuilder.sh clean -c <your_container_name>
 ```
 
 can be useful when things go bad.
