@@ -19,7 +19,7 @@
 # limitations under the License.
 ###########################################################################
 
-set -e
+#set -e
 set -o pipefail
 
 function usage {
@@ -112,6 +112,11 @@ fi
 DISTRIB=$(grep ^ID= /etc/os-release | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
 DISTRIB_VERSION=$(grep ^VERSION_ID= /etc/os-release | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
 
+if [ -z "${DISTRIB_VERSION}" ]; then
+    echo "Empty version distrib, trying another file (lsb-release)"
+    DISTRIB_VERSION=$(grep ^DISTRIB_RELEASE= /etc/lsb-release | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
+fi
+
 function error() {
     echo "FAIL: $*" >&2
 }
@@ -182,6 +187,8 @@ function check_distribution {
             echo -e "Unsupported version of distribution: ${DISTRIB}"
             exit 1
         fi
+        ;;
+    manjaro)
         ;;
     *)
         echo "${DISTRIB} is not a supported distribution, ask IoT.bzh team for support!"
@@ -338,6 +345,18 @@ function config_host {
         if [ -z "${HAVE_LXC}" ];then
             sudo zypper install --no-confirm lxd
             sudo systemctl enable --now lxd
+        fi
+        config_host_group
+        ;;
+    manjaro)
+        if [ -z "${HAVE_JQ}" ];then
+            echo "Installing jq ..."
+            sudo pacman -S jq
+        fi
+        if [ -z "${HAVE_LXC}" ];then
+            echo "Installing lxd ..."
+            sudo pacman -S lxd
+            sudo systemctl enable lxd
         fi
         config_host_group
         ;;
