@@ -19,7 +19,7 @@
 # limitations under the License.
 ###########################################################################
 
-#set -e
+set -e
 set -o pipefail
 
 function usage {
@@ -109,13 +109,12 @@ if [ -n "${CONTAINER_IMAGE}" ]; then
     CONTAINER_FLAVOURS[$CONTAINER_TYPE]="${CONTAINER_IMAGE}"
 fi
 
-DISTRIB=$(grep ^ID= /etc/os-release | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
-DISTRIB_VERSION=$(grep ^VERSION_ID= /etc/os-release | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
+function get_os_var_version_id() {
+    grep ^VERSION_ID= /etc/os-release || grep ^DISTRIB_RELEASE= /etc/lsb-release
+}
 
-if [ -z "${DISTRIB_VERSION}" ]; then
-    echo "Empty version distrib, trying another file (lsb-release)"
-    DISTRIB_VERSION=$(grep ^DISTRIB_RELEASE= /etc/lsb-release | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
-fi
+DISTRIB=$(grep ^ID= /etc/os-release | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
+DISTRIB_VERSION=$(get_os_var_version_id | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//')
 
 function error() {
     echo "FAIL: $*" >&2
