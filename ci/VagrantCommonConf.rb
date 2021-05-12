@@ -11,6 +11,8 @@ Vagrant.configure("2") do |config|
     vb.memory = "2048"
   end
 
-  config.vm.provision "file", source: "../../../install-redpesk-localbuilder.sh", destination: "/home/vagrant/"
-  config.vm.provision "shell", path: "../../test.sh", upload_path: "/home/vagrant/test.sh", privileged: false
+  config.vm.synced_folder "../../xml/", "/home/vagrant/xml"
+  config.vm.provision "file", source: "../../../install-redpesk-native.sh", destination: "/home/vagrant/"
+  config.vm.provision "shell", path: "../../testsdk.sh", upload_path: "/home/vagrant/testsdk.sh", privileged: false
+  
 end
