@@ -4,7 +4,8 @@ This set of two scripts is dedicated to developers.
 
 *install-redpesk-localbuilder.sh* setups a build container on your machine,
 this container has all the things you need to perform cross-compilation
-for a redpesk embedded target.
+for a redpesk embedded target. It can also install other flavours of supported
+containers.
 
 *install-redpesk-native.sh* installs the redpesk ApplicationFramework build environnement
 on your host (ie, the AFB binder, with the needed libraries and header files),
@@ -44,3 +45,9 @@ To set the environnement to compile for aarch64, do:
 ```bash
 . /usr/aarch64-linux-gnu/bin/cross-profile-setup-aarch64.sh
 ```
+
+## Using alternate remotes
+
+It is possible to target other remotes than the internal IoT.bzh one by using
+the `--remote-name` and `--remote-url` parameters. This can be useful to deploy
+containers from private LXD remotes for development purposes.

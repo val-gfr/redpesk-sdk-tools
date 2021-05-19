@@ -31,8 +31,10 @@ function usage {
         -c|--container-name\t: give the container name\n\
         -t|--container-type\t: container type to install [localbuilder|cloud-publication] (default: ${CONTAINER_TYPE_DEFAULT})\n\
         -i|--container-image\t: image name of the container to use \n\
-                                    (default for container-type 'localbuilder' ${CONTAINER_LB_IMAGE_DEFAULT})\n\
-                                    (default for container-type 'cloud-publication' ${CONTAINER_CP_IMAGE_DEFAULT})\n\
+                                    (default for container-type 'localbuilder': ${CONTAINER_LB_IMAGE_DEFAULT})\n\
+                                    (default for container-type 'cloud-publication': ${CONTAINER_CP_IMAGE_DEFAULT})\n\
+        -r|--remote-name\t: LXD remote name to use (default: ${IMAGE_REMOTE})
+        -u|--remote-url\t\t: LXD remote URL to use (default: ${IMAGE_STORE})
         -a|--non-interactive\t: run the script in non-interactive mode\n\
         \n\
         %s --help\t\t\tdisplays this text\n" "$0" "$0" "$0" "$0"
@@ -105,6 +107,14 @@ while [[ $# -gt 0 ]];do
         CONTAINER_IMAGE="$2";
         shift 2;
     ;;
+    -r|--remote-name)
+        IMAGE_REMOTE="$2";
+        shift 2;
+    ;;
+    -u|--remote-url)
+        IMAGE_STORE="$2";
+        shift 2;
+    ;;
     -a|--non-interactive)
         INTERACTIVE="no";
         shift;
@@ -116,6 +126,7 @@ while [[ $# -gt 0 ]];do
         if [ -z "${MAIN_CMD}" ]; then
             MAIN_CMD="$key";
         else
+            echo -e "${RED}Error${NORMAL}: unknown argument '$key'"
             usage;
         fi
         shift;
@@ -698,6 +709,7 @@ function fix_container {
 
 function setup_hosts {
     echo "Add container IP to your /etc/hosts"
+    echo "# Added by install-redpesk-localbuilder.sh" | sudo tee -a /etc/hosts
     echo "${MY_IP_ADD_RESS} ${CONTAINER_NAME}" | sudo tee -a /etc/hosts
 }
 
@@ -721,7 +733,9 @@ function setup_lxc_container {
     #script using "vagrant provision" (where this fails with: yaml: unmarshal
     #errors)
 	#see https://github.com/lxc/lxd/issues/6188#issuecomment-572248426
+
     IMAGE_SPEC="${IMAGE_REMOTE}:${CONTAINER_FLAVOURS[$CONTAINER_TYPE]}"
+    echo "Pulling in container image from $IMAGE_SPEC ..."
     ${LXC} launch "${IMAGE_SPEC}" "${CONTAINER_NAME}" --profile default --profile "${PROFILE_NAME}" < /dev/null
 
     setup_container_ip
