@@ -180,8 +180,8 @@ function check_distribution {
         fi
         ;;
     fedora)
-        if     [ "${DISTRIB_VERSION}" != "32" ] && \
-            [ "${DISTRIB_VERSION}" != "33" ]; then
+        if  [ "${DISTRIB_VERSION}" != "33" ] && \
+            [ "${DISTRIB_VERSION}" != "34" ]; then
             echo -e "Unsupported version of distribution: ${DISTRIB}"
             exit 1
         fi
