@@ -9,18 +9,20 @@ listepath=(["/fedora/33/"]="http://repo.lorient.iot/redpesk/sdk/master/Fedora_33
 ["/opensuse/15.2/"]="http://repo.lorient.iot/redpesk/sdk/master/openSUSE_Leap_15.2/latest/"
 )
 
+RESULT_DST="/home/vagrant/ci/xml/xunit.xml"
+mkdir -p "$(dirname "${RESULT_DST}")"
 test() {
     #write the tests result in the xunit.xml file
-    echo "<testcase classname='VMsdk.$ID.$VERSION_ID' file='VMsdk.sh' line='$3' name='$2_$ID.$VERSION_ID.$1'>" >> ./xml/xunit.xml
+    echo "<testcase classname='VMsdk.$ID.$VERSION_ID' file='VMsdk.sh' line='$3' name='$2_$ID.$VERSION_ID.$1'>" >> "${RESULT_DST}"
     if [ "$1" = "success" ]; then
-        echo "</testcase>" >> ./xml/xunit.xml
+        echo "</testcase>" >> "${RESULT_DST}"
     elif [ "$1" = "error" ]; then
-        echo -e "<error>$4</error>\n</testcase>" >> ./xml/xunit.xml
+        echo -e "<error>$4</error>\n</testcase>" >> "${RESULT_DST}"
         exitval=1
     elif [ "$1" = "skipped" ]; then
-        echo -e "<skipped> $skip </skipped>\n</testcase>" >> ./xml/xunit.xml
+        echo -e "<skipped> $skip </skipped>\n</testcase>" >> "${RESULT_DST}"
     elif [ "$1" = "failure" ]; then
-        echo -e "<failure/>\n</testcase>" >> ./xml/xunit.xml
+        echo -e "<failure/>\n</testcase>" >> "${RESULT_DST}"
         exitval=1
     fi
 }

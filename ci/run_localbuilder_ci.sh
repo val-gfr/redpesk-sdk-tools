@@ -21,7 +21,8 @@ function usage {
     printf "Usage: \n\
         %s DIR_PATH\t: vagrant directory\n\
         \n\
-        -n|--no-clean\t: do not clean your vagrant VM before and after the test\n\
+        -c|--clean\t: clean your vagrant VM before and after the test\n\
+        -s | --destroy\t: destroy your vagrant VM before and after the test\n\
         -d|--debug\t: do not clean your vagrant VM before and after the test\n\
         \n\
         %s -h|--help\t\t\tdisplays this text\n" "$0" "$0"
@@ -37,29 +38,47 @@ VAGRANT_OPT_LV1=("--no-color" "--no-tty")
 VAGRANT_OPT_LV2=("${VAGRANT_OPT_LV1[@]}")
 VAGRANT_OPT_LV2+=("--force")
 
-VAG_CLEAN="YES"
+VAG_CLEAN="NO"
+DESTROY_AFTER="NO"
 DEBUG="NO"
+
+script_dir="$(dirname "$(readlink -f "$0")")"
+LOG_DIR="${script_dir}/ci_log/$(date +%Y-%m-%d_%H-%M)"
+
+LISTPATH_DEFAULT="fedora/33 debian/10 ubuntu/20.04 opensuse/15.2"
+LISTPATH=""
 
 while [[ $# -gt 0 ]];do
     key="$1"
     case $key in
-    -n|--no-clean)
+    -c|--clean)
         VAG_CLEAN="NO";
+        shift 1;
+    ;;
+    -s | --destroy)
+        DESTROY_AFTER="YES"
         shift 1;
     ;;
     -d|--debug)
         DEBUG="YES";
         shift 1;
     ;;
+    -v | --vm-path)
+        LISTPATH="${LISTPATH} $2"
+        shift 2;
+    ;;
     -h|--help)
         usage;
     ;;
     *)
-        DIR_DIST="${1}"
-        shift 1;
+        usage;
     ;;
     esac
 done
+
+if [ -z "${LISTPATH}" ]; then
+    LISTPATH="${LISTPATH_DEFAULT}"
+fi
 
 function test_tool_bin {
     BIN2TEST="$1"
@@ -87,23 +106,49 @@ if [ "${DEBUG}" == "YES" ]; then
     set -x
 fi
 
-test_dir "${DIR_DIST}"
 test_tool_bin vagrant
+test_tool_bin screen
 
 cd "${DIR_DIST}" || exit 1
 
-if [ "${VAG_CLEAN}" == "YES" ]; then
-    # Clean old thinks
-    vagrant halt      "${VAGRANT_OPT_LV2[@]}"
-    vagrant destroy   "${VAGRANT_OPT_LV2[@]}"
-fi
+run_all_test(){
+    LOG_FILES=()
+    for DIR_DIST in ${LISTPATH}; do
+        test_dir "${DIR_DIST}"
+        run_one_test "${DIR_DIST}"
+    done
+}
 
-# Start and exec test
-vagrant up        "${VAGRANT_OPT_LV1[@]}" --no-provision 
-vagrant provision "${VAGRANT_OPT_LV1[@]}"
+run_one_test(){
+    DIST_VER="$1"
+    cd "${DIST_VER}" || exit
 
-if [ "${VAG_CLEAN}" == "YES" ]; then
-    # Clean before exit
-    vagrant halt      "${VAGRANT_OPT_LV2[@]}"
-    vagrant destroy   "${VAGRANT_OPT_LV2[@]}"
-fi
+    if [ "${VAG_CLEAN}" == "YES" ]; then
+        vagrant halt      "${VAGRANT_OPT_LV2[@]}"
+    fi
+
+    if [ "$DESTROY_AFTER" = "YES" ]; then
+        vagrant destroy "${VAGRANT_OPT_LV2[@]}"
+    fi
+
+    vagrant up          "${VAGRANT_OPT_LV1[@]}" --no-provision
+
+    LOG_FILE="${LOG_DIR}/run_log/${DIST_VER}.log"
+    mkdir -p "$(dirname "${LOG_FILE}")"
+    LOG_FILES+=("${LOG_FILE}")
+
+    screen -Logfile "${LOG_FILE}" -L -m vagrant provision "${VAGRANT_OPT_LV1[@]}" --provision-with install-redpesk-localbuilder,test-localbuilder-script
+
+    if [ "${VAG_CLEAN}" == "YES" ]; then
+        vagrant halt      "${VAGRANT_OPT_LV2[@]}"
+    fi
+
+    if [ "$DESTROY_AFTER" = "YES" ]; then
+        vagrant destroy "${VAGRANT_OPT_LV2[@]}"
+    fi
+    cd ../..
+}
+
+run_all_test
+
+./generate_ci_report.py "${LOG_FILES[@]}" --report-path "./report_$(date +%Y-%m-%d_%H-%M).log"
