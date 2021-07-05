@@ -567,11 +567,11 @@ function setup_repositories {
 
     GetDefaultDir gitsources "${gitsources_msg}" var_gitsources_dir
     GetDefaultDir gitpkgs "${gitpkgs_msg}" var_gitpkgs_dir
-    GetDefaultDir build "${build_msg}" var_build_dir
+    GetDefaultDir rpmbuild "${build_msg}" var_build_dir
 
     MapHostDir gitsources "${var_gitsources_dir}"
     MapHostDir gitpkgs "${var_gitpkgs_dir}"
-    MapHostDir build "${var_build_dir}"
+    MapHostDir rpmbuild "${var_build_dir}"
 
     echo "Mapping of host directories to retrieve your files in the container"
 }
