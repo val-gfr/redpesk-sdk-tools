@@ -581,6 +581,15 @@ function setup_repositories {
 }
 
 
+function setup_kvm_device_mapping {
+    # If we want that localbuilder could build an image then we will need to
+    # map the kvm device with correct permission and owner.
+
+    if [[ "$CONTAINER_TYPE" != "cloud-publication" ]]; then
+      lxc config device add ${CONTAINER_NAME} kvm unix-char path=/dev/kvm gid=36 mode=0666
+    fi
+}
+
 function setup_port_redirections {
     # Certain containers need custom port redirections. We set them up here.
 
@@ -674,6 +683,8 @@ function setup_lxc_container {
     setup_repositories
 
     setup_port_redirections
+
+    setup_kvm_device_mapping 
 
     ${LXC} restart "${CONTAINER_NAME}"
 
