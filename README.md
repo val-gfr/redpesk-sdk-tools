@@ -1,15 +1,14 @@
-# RedPesk LocalBuilder installer
+# redpesk LocalBuilder installer
 
-This set of two scripts is dedicated to developers. 
+This set of two scripts is dedicated to developers.
 
 *install-redpesk-localbuilder.sh* setups a build container on your machine,
 this container has all the things you need to perform cross-compilation
 for a redpesk embedded target.
 
 *install-redpesk-native.sh* installs the redpesk ApplicationFramework build environnement
-on your host (ie, the AFB binder, with the needed libraries and header files), 
+on your host (ie, the AFB binder, with the needed libraries and header files),
 for developers that feel more comfortable with developing in a native development.
-
 
 ```bash
 # To configure LXD on your host
