@@ -1,19 +1,20 @@
 #!/bin/bash
-
+# shellcheck disable=SC1091
 source /etc/os-release
 
 declare -A listepath
 listepath=(["/fedora/33/"]="http://repo.lorient.iot/redpesk/sdk/master/Fedora_33/latest/"
 ["/debian/10/"]="http://repo.lorient.iot/redpesk/sdk/master/Debian_10/latest/"
 ["/ubuntu/20.04/"]="http://repo.lorient.iot/redpesk/sdk/master/Ubuntu_20.04/latest/"
-["/opensuse/15.2/"]="http://repo.lorient.iot/redpesk/sdk/master/openSUSE_Leap_15.2/latest/"
+["/opensuse-leap/15.2/"]="http://repo.lorient.iot/redpesk/sdk/master/openSUSE_Leap_15.2/latest/"
 )
 
-RESULT_DST="/home/vagrant/ci/xml/xunit.xml"
+RESULT_DST="/home/vagrant/ci/${ID}_${VERSION_ID}_xunit.xml"
 mkdir -p "$(dirname "${RESULT_DST}")"
+
 test() {
     #write the tests result in the xunit.xml file
-    echo "<testcase classname='VMsdk.$ID.$VERSION_ID' file='VMsdk.sh' line='$3' name='$2_$ID.$VERSION_ID.$1'>" >> "${RESULT_DST}"
+    echo "<testcase classname='VMsdk.${ID}.${VERSION_ID}' file='VMsdk.sh' line='$3' name='$2_${ID}.${VERSION_ID}.$1'>" >> "${RESULT_DST}"
     if [ "$1" = "success" ]; then
         echo "</testcase>" >> "${RESULT_DST}"
     elif [ "$1" = "error" ]; then
@@ -30,13 +31,18 @@ test() {
 sdktest () {
     #install and test the SDK
     (( line=LINENO + 1 ))
-    if ./install-redpesk-native.sh -r "${listepath[$1]}" ; then
+    REPO_URL="${listepath[$1]}"
+    if [ -z "${REPO_URL}" ]; then
+        echo "No repo URL fort this distribution"
+        return 1
+    fi
+    if ./install-redpesk-native.sh -r "${REPO_URL}" ; then
         test "success" "test_native_install" "$line"
     else 
         test "error" "test_native_install" "$line"
     fi
     #install helloword-binding and helloword-binding-test
-    case $ID in
+    case ${ID} in
         ubuntu | debian)
             (( line=LINENO + 1 ))
             if sudo apt-get install helloworld-binding-bin helloworld-binding-test ;then
@@ -63,7 +69,7 @@ sdktest () {
         ;;
         *)
             echo "error: distribution not supported"
-            exit 1
+            return 1
         ;;
     esac
     #test afm-test command
@@ -91,56 +97,20 @@ sdktest () {
     else 
         test "error" "test_afm-test" "$line"
     fi
-    exit $exitval
+    return $exitval
 }
-
 
 echo "distribution: $PRETTY_NAME"
 #detect the OS and launch the sdktest function
-case $ID in
+case ${ID} in
     ubuntu)
-        case $VERSION_ID in
-            20.04)
-                sudo sed -i '17inameserver 10.16.2.10\ ' /etc/resolv.conf
-                sdktest "/ubuntu/$VERSION_ID/"
-                ;;
-            *)
-                error_message
-                ;;
-        esac
-        ;;
-    opensuse-leap)
-        case $VERSION_ID in
-            15.2)
-                sdktest "/opensuse/$VERSION_ID/"
-                ;;
-            *)
-                error_message
-                ;;
-        esac
-        ;;
-    fedora)
-        case $VERSION_ID in
-            33)
-                sdktest "/fedora/$VERSION_ID/"
-                ;;
-            *)
-                error_message
-                ;;
-        esac
+        sudo sed -i '17inameserver 10.16.2.10\ ' /etc/resolv.conf
         ;;
     debian)
-        case $VERSION_ID in 
-            10)
-                sudo sed -i '3inameserver 10.16.2.10\ ' /etc/resolv.conf
-                sdktest "/debian/$VERSION_ID/"
-                ;;
-            *)
-                error_message
-                ;;
-        esac
-        ;;
-    *)
-        error_message
+        sudo sed -i '3inameserver 10.16.2.10\ ' /etc/resolv.conf
         ;;
 esac
+echo -e '<?xml version="1.0" encoding="UTF-8"?>\n<testsuites>\n<testsuite>' > "${RESULT_DST}"
+exitval=$(sdktest "/${ID}/${VERSION_ID}/")
+echo -e '</testsuite>\n</testsuites>' >> "${RESULT_DST}"
+exit "$exitval"

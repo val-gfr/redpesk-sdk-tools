@@ -63,7 +63,7 @@ SUPPORTED_UBUNTU["20.10"]="True"
 SUPPORTED_OPENSUSE["15.2"]="True"
 
 CONTAINER_USER=devel
-CONTAINER_GRP=devel
+#CONTAINER_GRP=devel
 CONTAINER_UID=1000
 CONTAINER_GID=1000
 
@@ -87,6 +87,7 @@ MY_IP_ADD_RESS=""
 LXC=""
 LXD=""
 
+# shellcheck disable=SC1091
 source /etc/os-release
 
 while [[ $# -gt 0 ]];do
@@ -548,9 +549,9 @@ function setup_ssh {
 
     echo "Adding our pubkey to authorized_keys"
     ${LXC} config device add "${CONTAINER_NAME}" my_authorized_keys disk source="${SSH_DIR}"/id_rsa.pub path="${CONTAINER_SSH_DIR}"/authorized_keys
-    test ! -f ${SSH_DIR}/authorized_keys && ${SSH_DIR}/authorized_keys
-    grep -v "$(cat ${SSH_DIR}/id_rsa.pub)" ${SSH_DIR}/authorized_keys && \
-      cat ${SSH_DIR}/id_rsa.pub >> ${SSH_DIR}/authorized_keys
+    test ! -f "${SSH_DIR}/authorized_keys" && "${SSH_DIR}/authorized_keys"
+    grep -v "$(cat "${SSH_DIR}"/id_rsa.pub)" "${SSH_DIR}/authorized_keys" && \
+      cat "${SSH_DIR}/id_rsa.pub" >> "${SSH_DIR}/authorized_keys"
 
     if [ ! -f "${KNOWN_HOSTS_FILE}" ]; then
         touch "${KNOWN_HOSTS_FILE}"
@@ -628,7 +629,7 @@ function setup_kvm_device_mapping {
     # map the kvm device with correct permission and owner.
 
     if [[ "$CONTAINER_TYPE" != "cloud-publication" ]]; then
-      lxc config device add ${CONTAINER_NAME} kvm unix-char path=/dev/kvm gid=36 mode=0666
+      lxc config device add "${CONTAINER_NAME}" kvm unix-char path=/dev/kvm gid=36 mode=0666
     fi
 }
 

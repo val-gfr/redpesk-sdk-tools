@@ -1,0 +1,6 @@
+fedora/33/
+fedora/34/
+debian/10/
+ubuntu/20.04/
+opensuse-leap/15.2/
+opensuse-leap/15.3/

@@ -11,10 +11,12 @@ function usage {
 }
 
 script_dir="$(dirname "$(readlink -f "$0")")"
-RESULT_DST="${script_dir}/xml/xunit.xml"
-mkdir -p "$(dirname "${RESULT_DST}")"
 
-LISTPATH_DEFAULT="fedora/33/ debian/10/ ubuntu/20.04/ opensuse/15.2/"
+
+LISTPATH_DEFAULT="fedora/33/ debian/10/ ubuntu/20.04/ opensuse-leap/15.2/"
+
+
+
 LISTPATH=""
 DESTROY_AFTER="n"
 
@@ -34,6 +36,11 @@ while [[ $# -gt 0 ]]; do
         shift 1;
     ;;
     -v | --vm-path)
+        if [ -z $2 ]; then 
+            echo "No parameter for option --vm-path"
+            usage
+            exit 1
+        fi
         LISTPATH="${LISTPATH} $2"
         shift 2;
     ;;
@@ -48,14 +55,10 @@ if [ -z "${LISTPATH}" ]; then
 fi
 
 #function that runs all VMs from listepath
-run_all_test(){
-    #write at the beginning of the xunit.xml file
-    touch "${RESULT_DST}"
-    echo -e '<?xml version="1.0" encoding="UTF-8"?>\n<testsuites>\n<testsuite>' > "${RESULT_DST}"
+run_all_test(){   
     for path in ${LISTPATH}; do
         run_one_test "${script_dir}/${path}"
     done
-    echo -e '</testsuite>\n</testsuites>' >> "${RESULT_DST}"
 }
 
 run_one_test(){

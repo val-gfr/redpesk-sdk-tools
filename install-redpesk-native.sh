@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ###########################################################################
-
+# shellcheck disable=SC1091
 source /etc/os-release
 
 SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2/15.3, Fedora 33/32/31"
@@ -35,110 +35,40 @@ error_message () {
 
 echo "Detected distribution: $PRETTY_NAME"
 
-if [ $# -gt 0 ]; then
-
-	while [[ $# -gt 0 ]]; do
-		OPTION="$1"
-		case $OPTION in
-		-r|--repository)
-			if [[ -n $2 ]]; then
-				REDPESK_REPO="$2";
-				shift 2;
-			else
-				printf "command error: a repository was expected\n-r <repository>\n"
-				exit;
-			fi
-		;;
-		-h | --help)
-			help;
-		;;
-		*)
-			printf " Unknown command\n
-			try -h or --help\n "
-			exit
-		;;
-		esac
-	done
-
-
-	case $ID in
-		ubuntu)
-			case $VERSION_ID in
-				20.04)
-					#Add redpesk repos
-					sudo apt install -y wget add-apt-key gnupg
-					wget -O - "${REDPESK_REPO}"Release.key | sudo apt-key add - 
-					sudo sh -c 'echo "deb [trusted=yes] '${REDPESK_REPO}' ./" > /etc/apt/sources.list.d/redpesk-sdk.list'
-					sudo apt-get update
-					#Install base redpesk packages
-					sudo apt install -y afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin
-					;;
-				*)
-					error_message
-					;;
-			esac
-			;;
-		opensuse-leap)
-			case $VERSION_ID in
-				15.2)
-					#Add redpesk repos
-					sudo zypper ar -f "${REDPESK_REPO}" redpesk-sdk
-					sudo zypper --non-interactive --gpg-auto-import-keys ref
-					sudo zypper dup --non-interactive --from redpesk-sdk
-					#Install base redpesk packages
-					sudo zypper --no-gpg-checks install -y afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test
-					;;
-				*)
-					error_message
-					;;
-			esac
-			;;
-		fedora)
-			case $VERSION_ID in
-				33)
-					#Add redpesk repos
-					sudo dnf install -y dnf-plugins-core
-					sudo dnf config-manager --add-repo "${REDPESK_REPO}"
-					#Install base redpesk packages
-					sudo dnf install -y --nogpgcheck afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test
-					;;
-				*)
-					error_message
-					;;
-			esac
-			;;
-		debian)
-			case $VERSION_ID in
-				10)
-					#Add redpesk repos 
-					sudo sh -c 'echo "deb [trusted=yes] '${REDPESK_REPO}' ./" > /etc/apt/sources.list.d/redpesk-sdk.list'
-					sudo apt-get update
-					#Install base redpesk packages
-					sudo apt-get install -y afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin
-					;;
-				*)
-					error_message
-					;;
-			esac
-			;;
-		*)
-			error_message
-			;;
+while [[ $# -gt 0 ]]; do
+	OPTION="$1"
+	case $OPTION in
+	-r|--repository)
+		if [[ -n $2 ]]; then
+			REDPESK_REPO="$2";
+			shift 2;
+		else
+			printf "command error: a repository was expected\n-r <repository>\n"
+			exit;
+		fi
+	;;
+	-h | --help)
+		help;
+	;;
+	*)
+		printf " Unknown command\n
+		try -h or --help\n "
+		exit
+	;;
 	esac
+done
 
-else
-
-	case $ID in
+case $ID in
 	ubuntu)
 		case $VERSION_ID in
 			20.04)
 				#Add redpesk repos
 				sudo apt install -y wget add-apt-key gnupg
-				wget -O - ${REDPESK_REPO}xUbuntu_20.04/Release.key | sudo apt-key add -
-				sudo sh -c 'echo "deb '${REDPESK_REPO}'xUbuntu_20.04/ ./" > /etc/apt/sources.list.d/redpesk-sdk.list'
+				wget -O - "${REDPESK_REPO}"Release.key | sudo apt-key add - 
+				sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > /etc/apt/sources.list.d/redpesk-sdk.list'
 				sudo apt-get update
 				#Install base redpesk packages
-				sudo apt install -y afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools
+				sudo apt install -y afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin
 				;;
 			*)
 				error_message
@@ -149,11 +79,11 @@ else
 		case $VERSION_ID in
 			15.2 | 15.3)
 				#Add redpesk repos
-				sudo zypper ar -f -r ${REDPESK_REPO}redpesk-sdk_suse.repo redpesk-sdk
-				sudo zypper --gpg-auto-import-keys ref
-				sudo zypper dup --from redpesk-sdk
+				sudo zypper ar -f "${REDPESK_REPO}" redpesk-sdk
+				sudo zypper --non-interactive --gpg-auto-import-keys ref
+				sudo zypper dup --non-interactive --from redpesk-sdk
 				#Install base redpesk packages
-				sudo zypper install -y afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools
+				sudo zypper --no-gpg-checks install -y afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test
 				;;
 			*)
 				error_message
@@ -162,12 +92,26 @@ else
 		;;
 	fedora)
 		case $VERSION_ID in
-			31 | 32 | 33)
-                #Add redpesk repos
+			33)
+				#Add redpesk repos
 				sudo dnf install -y dnf-plugins-core
-				sudo dnf config-manager --add-repo ${REDPESK_REPO}redpesk-sdk_fedora.repo
+				sudo dnf config-manager --add-repo "${REDPESK_REPO}"
 				#Install base redpesk packages
-				sudo dnf install -y afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools
+				sudo dnf install -y --nogpgcheck afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test
+				;;
+			*)
+				error_message
+				;;
+		esac
+		;;
+	debian)
+		case $VERSION_ID in
+			10)
+				#Add redpesk repos 
+				sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > /etc/apt/sources.list.d/redpesk-sdk.list'
+				sudo apt-get update
+				#Install base redpesk packages
+				sudo apt-get install -y afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin
 				;;
 			*)
 				error_message
@@ -175,7 +119,6 @@ else
 		esac
 		;;
 	*)
-	 	error_message
+		error_message
 		;;
-	esac
-fi
+esac

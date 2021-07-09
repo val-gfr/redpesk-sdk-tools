@@ -19,7 +19,7 @@
 
 function usage {
     printf "Usage: \n\
-        %s DIR_PATH\t: vagrant directory\n\
+        -v | --vm-path <VMpath>:\t Start the VM contained in the VMpath, run its configured provisionners and shut it down\n
         \n\
         -c|--clean\t: clean your vagrant VM before and after the test\n\
         -s | --destroy\t: destroy your vagrant VM before and after the test\n\
@@ -45,7 +45,7 @@ DEBUG="NO"
 script_dir="$(dirname "$(readlink -f "$0")")"
 LOG_DIR="${script_dir}/ci_log/$(date +%Y-%m-%d_%H-%M)"
 
-LISTPATH_DEFAULT="fedora/33 debian/10 ubuntu/20.04 opensuse/15.2"
+LISTPATH_DEFAULT="fedora/33 debian/10 ubuntu/20.04 opensuse-leap/15.2"
 LISTPATH=""
 
 while [[ $# -gt 0 ]];do
@@ -136,8 +136,8 @@ run_one_test(){
     LOG_FILE="${LOG_DIR}/run_log/${DIST_VER}.log"
     mkdir -p "$(dirname "${LOG_FILE}")"
     LOG_FILES+=("${LOG_FILE}")
-
-    screen -Logfile "${LOG_FILE}" -L -m vagrant provision "${VAGRANT_OPT_LV1[@]}" --provision-with install-redpesk-localbuilder,test-localbuilder-script
+    
+    screen -d -m -Logfile "${LOG_FILE}" -L -m vagrant provision "${VAGRANT_OPT_LV1[@]}" --provision-with install-redpesk-localbuilder,test-localbuilder-script
 
     if [ "${VAG_CLEAN}" == "YES" ]; then
         vagrant halt      "${VAGRANT_OPT_LV2[@]}"
