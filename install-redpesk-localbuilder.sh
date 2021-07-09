@@ -48,6 +48,20 @@ IMAGE_REMOTE="iotbzh"
 IMAGE_STORE="download.redpesk.bzh"
 IMAGE_STORE_PASSWD="iotbzh"
 
+declare -A SUPPORTED_FEDORA
+declare -A SUPPORTED_DEBIAN
+declare -A SUPPORTED_UBUNTU
+declare -A SUPPORTED_OPENSUSE
+
+SUPPORTED_FEDORA["33"]="True"
+SUPPORTED_FEDORA["34"]="True"
+SUPPORTED_DEBIAN["10"]="True"
+SUPPORTED_UBUNTU["18.04"]="True"
+SUPPORTED_UBUNTU["18.10"]="True"
+SUPPORTED_UBUNTU["20.04"]="True"
+SUPPORTED_UBUNTU["20.10"]="True"
+SUPPORTED_OPENSUSE["15.2"]="True"
+
 CONTAINER_USER=devel
 CONTAINER_GRP=devel
 CONTAINER_UID=1000
@@ -72,6 +86,8 @@ INTERACTIVE="yes"
 MY_IP_ADD_RESS=""
 LXC=""
 LXD=""
+
+source /etc/os-release
 
 while [[ $# -gt 0 ]];do
     key="$1"
@@ -118,9 +134,6 @@ function get_os_var_version_id() {
     grep ^VERSION_ID= /etc/os-release || grep ^DISTRIB_RELEASE= /etc/lsb-release
 }
 
-DISTRIB=$(grep ^ID= /etc/os-release | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//' )
-DISTRIB_VERSION=$(get_os_var_version_id | cut -d '=' -f2 | sed -e 's/^"//' -e 's/"$//')
-
 function error() {
     echo "FAIL: $*" >&2
 }
@@ -162,40 +175,36 @@ function check_lxd {
 }
 
 function check_distribution {
-    echo "Detected host distribution: ${DISTRIB} version ${DISTRIB_VERSION}"
-    case ${DISTRIB} in
+    echo "Detected host distribution: ${ID} version ${VERSION_ID}"
+    case ${ID} in
     ubuntu)
-        if    [ "${DISTRIB_VERSION}" != "18.04" ] && \
-            [ "${DISTRIB_VERSION}" != "18.10" ] && \
-            [ "${DISTRIB_VERSION}" != "20.04" ] && \
-            [ "${DISTRIB_VERSION}" != "20.10" ]; then
-            echo -e "Unsupported version of distribution: ${DISTRIB}"
+        if [[ ! ${SUPPORTED_UBUNTU[${VERSION_ID}]} == "True" ]];then
+            echo -e "Unsupported version of distribution: ${ID}"
             exit 1
         fi
         ;;
     debian)
-        if    [ "${DISTRIB_VERSION}" != "10" ]; then
-            echo -e "Unsupported version of distribution: ${DISTRIB}"
+        if [[ ! ${SUPPORTED_DEBIAN[${VERSION_ID}]} == "True" ]];then
+            echo -e "Unsupported version of distribution: ${ID}"
             exit 1
         fi
         ;;
     fedora)
-        if  [ "${DISTRIB_VERSION}" != "33" ] && \
-            [ "${DISTRIB_VERSION}" != "34" ]; then
-            echo -e "Unsupported version of distribution: ${DISTRIB}"
+        if [[ ! ${SUPPORTED_FEDORA[${VERSION_ID}]} == "True" ]];then
+            echo -e "Unsupported version of distribution: ${ID}"
             exit 1
         fi
         ;;
     opensuse-leap)
-        if [ "${DISTRIB_VERSION}" != "15.2" ]; then
-            echo -e "Unsupported version of distribution: ${DISTRIB}"
+        if [[ ! ${SUPPORTED_OPENSUSE[${VERSION_ID}]} == "True" ]];then
+            echo -e "Unsupported version of distribution: ${ID}"
             exit 1
         fi
         ;;
     manjaro)
         ;;
     *)
-        echo "${DISTRIB} is not a supported distribution, ask IoT.bzh team for support!"
+        echo "${ID} is not a supported distribution, ask IoT.bzh team for support!"
         exit 1
         ;;
     esac
@@ -288,7 +297,7 @@ function config_host {
     HAVE_LXC="$(which lxc)" || echo "No lxc on this host"
     HAVE_JQ="$(which jq)" || echo "No jq on this host"
 
-    case ${DISTRIB} in
+    case ${ID} in
     ubuntu)
         sudo apt-get update
         if [ -z "${HAVE_JQ}" ];then
@@ -365,7 +374,7 @@ function config_host {
         config_host_group
         ;;
     *)
-        echo "${DISTRIB} is not a supported distribution!"
+        echo "${ID} is not a supported distribution!"
         exit 1
         ;;
     esac
