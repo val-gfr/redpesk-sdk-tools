@@ -572,7 +572,7 @@ function MapHostDir () {
 
 function setup_repositories {
 
-    # The cloud publication container does not need any repository mappings
+    # The cloud publication container does not need any host dir mappings
     if [[ "$CONTAINER_TYPE" == "cloud-publication" ]]; then
         return
     fi
@@ -621,9 +621,13 @@ function setup_port_redirections {
     # on port 21212. Note: both port numbers need to match the systemd service
     # file within the container and the port used by the binder on the target to
     # reach the host, respectively.
+    # We also expose the HTTP port itself on host port 21213 as this allows
+    # WebSocket communications to the binder itself
     if [[ "$CONTAINER_TYPE" == "cloud-publication" ]]; then
         ${LXC} config device add "${CONTAINER_NAME}" redis-cloud-api proxy \
             listen=tcp:0.0.0.0:21212 connect=tcp:127.0.0.1:30003
+        ${LXC} config device add "${CONTAINER_NAME}" redis-cloud-http proxy \
+            listen=tcp:0.0.0.0:21213 connect=tcp:127.0.0.1:1234
     fi
 }
 
