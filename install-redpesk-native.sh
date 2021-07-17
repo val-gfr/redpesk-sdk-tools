@@ -17,7 +17,7 @@
 # limitations under the License.
 ###########################################################################
 
-SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2, Fedora 33, 32 and 31"
+SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2/15.3, Fedora 33/32/31"
 REDPESK_REPO="https://download.redpesk.bzh/redpesk-devel/releases/33/sdk/"
 source /etc/os-release
 echo "Detected distribution: $PRETTY_NAME"
@@ -45,7 +45,7 @@ case $ID in
 		;;
 	opensuse-leap)
 		case $VERSION_ID in
-			15.2)
+			15.2 | 15.3)
 				#Add redpesk repos
 				sudo zypper ar -f -r ${REDPESK_REPO}redpesk-sdk_suse.repo redpesk-sdk
 				sudo zypper --gpg-auto-import-keys ref
