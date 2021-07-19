@@ -474,6 +474,14 @@ function check_image_availability {
             return 0
         fi
     done
+
+    echo ""${IMAGE_TO_TEST}" not an image alias, trying as a fingerprint ..."
+    for i in $(${LXC} image list "${IMAGE_REMOTE}": --columns f --format csv); do
+        if [ "${i}" == "${IMAGE_TO_TEST}" ]; then
+            return 0
+        fi
+    done
+
     error "Image '${IMAGE_TO_TEST}' is not present in remote server '${IMAGE_REMOTE}'"
     exit 1
 }
