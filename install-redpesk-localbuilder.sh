@@ -58,7 +58,7 @@ CONTAINER_NAME=""
 CONTAINER_TYPE=""
 CONTAINER_TYPE_DEFAULT="localbuilder"
 CONTAINER_IMAGE=""
-CONTAINER_LB_IMAGE_DEFAULT="redpesk-builder/33"
+CONTAINER_LB_IMAGE_DEFAULT="redpesk-builder/arz-1.0"
 CONTAINER_CP_IMAGE_DEFAULT="redpesk-cloud-publication"
 
 # List of supported container types.
