@@ -18,7 +18,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision  "test-localbuilder-script", type: "shell", path: "../../test_localbuilder.sh", upload_path: "/home/vagrant/test_localbuilder.sh", privileged: false
   
   #SDK CI
-  config.vm.provision  "install-redpesk-native", type: "file", source: "../../../install-redpesk-native.sh", destination: "/home/vagrant/"
+  config.vm.provision  "install-redpesk-sdk", type: "file", source: "../../../install-redpesk-sdk.sh", destination: "/home/vagrant/"
   config.vm.provision  "test-sdk-script", type: "shell", path: "../../test_SDK.sh", upload_path: "/home/vagrant/test_SDK.sh", privileged: false
   
 end

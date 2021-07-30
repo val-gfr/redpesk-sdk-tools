@@ -36,7 +36,7 @@ sdktest () {
         echo "No repo URL fort this distribution"
         return 1
     fi
-    if ./install-redpesk-native.sh -r "${REPO_URL}" ; then
+    if ./install-redpesk-sdk.sh -r "${REPO_URL}" ; then
         test "success" "test_native_install" "$line"
     else 
         test "error" "test_native_install" "$line"

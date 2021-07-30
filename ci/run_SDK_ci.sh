@@ -64,7 +64,7 @@ run_all_test(){
 run_one_test(){
     cd "$1" || exit
     vagrant up --no-provision
-    vagrant provision --provision-with test-sdk-script,install-redpesk-native
+    vagrant provision --provision-with test-sdk-script,install-redpesk-sdk
     vagrant halt
     if [ "$DESTROY_AFTER" = "y" ]; then
         vagrant destroy -f
