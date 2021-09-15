@@ -20,7 +20,7 @@
 source /etc/os-release
 
 SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2/15.3, Fedora 34/33"
-REDPESK_REPO="https://download.redpesk.bzh/redpesk-devel/releases/arz-1.0/sdk/"
+REDPESK_REPO="https://download.redpesk.bzh/redpesk-lts/arz-1/sdk/"
 
 function help {
     echo -e "Supported distributions : $SUPPORTED_DISTROS\n
