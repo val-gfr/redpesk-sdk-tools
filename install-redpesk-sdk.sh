@@ -20,13 +20,7 @@
 source /etc/os-release
 
 SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2/15.3, Fedora 34/33"
-REDPESK_REPO="https://download.redpesk.bzh/redpesk-lts/arz-1/sdk/"
-
-SPIKPACKINST="no";
-INTERACTIVE="yes";
-
-LIST_PACKAGE_DEB="afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin"
-LIST_PACKAGE_RPM="afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test"
+REDPESK_REPO="https://download.redpesk.bzh/redpesk-lts/arz/sdk/"
 
 function help {
     echo -e "Supported distributions : $SUPPORTED_DISTROS\n
