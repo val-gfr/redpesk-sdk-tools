@@ -20,10 +20,18 @@
 source /etc/os-release
 
 SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2/15.3, Fedora 34/33"
-REDPESK_REPO="https://download.redpesk.bzh/redpesk-lts/arz/sdk/"
+REDPESK_REPO="https://download.redpesk.bzh/redpesk-lts/arz-1/sdk/"
+
+SPIKPACKINST="no";
+INTERACTIVE="yes";
+
+LIST_PACKAGE_DEB="afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin afb-client redpesk-cli"
+LIST_PACKAGE_RPM="afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test afb-client redpesk-cli"
+
 
 function help {
     echo -e "Supported distributions : $SUPPORTED_DISTROS\n
+			-c | --rp-cli:\t install rp-cli only\n
             -r | --repository:\t redpesk sdk repository path\n
 			-h | --help:\t Display help\n
 			-s| --skip-packages-install\n
@@ -40,6 +48,12 @@ echo "Detected distribution: $PRETTY_NAME"
 while [[ $# -gt 0 ]]; do
 	OPTION="$1"
 	case $OPTION in
+	-c|--rp-cli)
+		# Overwrite list to install
+		LIST_PACKAGE_DEB="redpesk-cli"
+		LIST_PACKAGE_RPM="redpesk-cli"
+		shift;
+	;;
 	-r|--repository)
 		if [[ -n $2 ]]; then
 			REDPESK_REPO="$2";
