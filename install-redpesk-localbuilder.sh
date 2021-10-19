@@ -568,16 +568,22 @@ function GetDefaultDir () {
     default_name_dir=$1
     default_msg=$2
     local result_name_dir=$3
+    local default_cntnr_dir=${DEFAULT_CNTNR_DIR}
     result_value=""
+
+    if [[ ${default_name_dir} == ".ssh" ]];then
+        default_cntnr_dir=${HOME}
+    fi
+
     echo -e "Directory: ${BOLD}${GREEN}${default_name_dir}${NORMAL}
 Host directory with ${default_msg}.
 In container ${BOLD}\${HOME}/${GREEN}${default_name_dir}${NORMAL}
-Choose Host directory path, default[${BOLD}${DEFAULT_CNTNR_DIR}/${GREEN}${default_name_dir}${NORMAL}]:"
+Choose Host directory path, default[${BOLD}${default_cntnr_dir}/${GREEN}${default_name_dir}${NORMAL}]:"
     if [ "${INTERACTIVE}" == "yes" ]; then
         read -r result_value
     fi
     if [ -z "${result_value}" ]; then
-        result_value=${DEFAULT_CNTNR_DIR}/${default_name_dir}
+        result_value=${default_cntnr_dir}/${default_name_dir}
     fi
     eval "$result_name_dir"="${result_value}"
 }
