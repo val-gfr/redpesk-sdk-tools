@@ -22,10 +22,18 @@ source /etc/os-release
 SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2/15.3, Fedora 34/33"
 REDPESK_REPO="https://download.redpesk.bzh/redpesk-lts/arz-1/sdk/"
 
+SPIKPACKINST="no";
+INTERACTIVE="yes";
+
+LIST_PACKAGE_DEB="afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin"
+LIST_PACKAGE_RPM="afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test"
+
 function help {
     echo -e "Supported distributions : $SUPPORTED_DISTROS\n
             -r | --repository:\t redpesk sdk repository path\n
-			-h | --help:\t Display help\n"
+			-h | --help:\t Display help\n
+			-s| --skip-packages-install\n
+			-a| --non-interactive\n"
     exit
 }
 
@@ -50,6 +58,14 @@ while [[ $# -gt 0 ]]; do
 	-h | --help)
 		help;
 	;;
+	-s| --skip-packages-install)
+        SPIKPACKINST="yes";
+        shift;
+	;;
+    -a|--non-interactive)
+        INTERACTIVE="no";
+        shift;
+    ;;
 	*)
 		printf " Unknown command\n
 		try -h or --help\n "
@@ -58,6 +74,40 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+REPO_CONF_FILE_NAME="redpesk-sdk"
+REPO_CONF_FILE=""
+case $ID in
+	ubuntu)
+		REPO_CONF_FILE="/etc/apt/sources.list.d/${REPO_CONF_FILE_NAME}.list"
+		;;
+	opensuse-leap)
+		REPO_CONF_FILE="/etc/zypp/repos.d/${REPO_CONF_FILE_NAME}.repo"
+		;;
+	fedora)
+		REPO_CONF_FILE="/etc/yum.repos.d/${REPO_CONF_FILE_NAME}.repo"
+		;;
+	debian)
+		REPO_CONF_FILE="/etc/apt/sources.list.d/${REPO_CONF_FILE_NAME}.list"
+		;;
+	*)
+		error_message
+		;;
+esac
+
+WRITE_CONF="yes"
+
+if [ -f "${REPO_CONF_FILE}" ]; then
+	if [ "${INTERACTIVE}" == "yes" ]; then
+		read -r -p "The conf file ${REPO_CONF_FILE} exists and will be destroyed, keep it? [N/y]" choice
+	fi
+	if [ -z "${choice}" ]; then
+		choice="n"
+	fi
+	if [ "x$choice" != "xn" ] && [ "x$choice" != "xN" ]; then
+		WRITE_CONF="no"
+	fi
+fi
+
 case $ID in
 	ubuntu)
 		case $VERSION_ID in
@@ -65,10 +115,14 @@ case $ID in
 				#Add redpesk repos
 				sudo apt install -y wget add-apt-key gnupg
 				#wget -O - "${REDPESK_REPO}"Release.key | sudo apt-key add - 
-				sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}/Ubuntu_${VERSION_ID}"' ./" > /etc/apt/sources.list.d/redpesk-sdk.list'
+				if [ "${WRITE_CONF}" == "yes" ]; then
+					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}/Ubuntu_${VERSION_ID}"' ./" > '"${REPO_CONF_FILE}"
+				fi
 				sudo apt-get update
 				#Install base redpesk packages
-				sudo apt install -y afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin
+				if [ "${SPIKPACKINST}" == "no" ]; then
+					sudo apt install -y ${LIST_PACKAGE_DEB}
+				fi
 				;;
 			*)
 				error_message
@@ -80,10 +134,22 @@ case $ID in
 			15.2 | 15.3)
 				#Add redpesk repos
 				sudo zypper ar -f "${REDPESK_REPO}/openSUSE_Leap_${VERSION_ID}" redpesk-sdk
+
+				if [ "${WRITE_CONF}" == "yes" ]; then
+				sudo tee "${REPO_CONF_FILE}" >/dev/null <<EOF
+[redpesk-sdk]
+name=redpesk-sdk
+baseurl=${REDPESK_REPO}/openSUSE_Leap_${VERSION_ID}
+enabled=1
+gpgcheck=0
+EOF
+				fi
 				sudo zypper --non-interactive --gpg-auto-import-keys ref
-				sudo zypper dup --non-interactive --from redpesk-sdk
+				sudo zypper --non-interactive  dup --from redpesk-sdk
 				#Install base redpesk packages
-				sudo zypper --no-gpg-checks install -y afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test
+				if [ "${SPIKPACKINST}" == "no" ]; then
+					sudo zypper install -y ${LIST_PACKAGE_RPM}
+				fi
 				;;
 			*)
 				error_message
@@ -95,9 +161,20 @@ case $ID in
 			33 | 34)
 				#Add redpesk repos
 				sudo dnf install -y dnf-plugins-core
-				sudo dnf config-manager --add-repo "${REDPESK_REPO}/Fedora_${VERSION_ID}"
+				if [ "${WRITE_CONF}" == "yes" ]; then
+					sudo tee "${REPO_CONF_FILE}" >/dev/null <<EOF
+[redpesk-sdk]
+name=redpesk-sdk
+baseurl=${REDPESK_REPO}/Fedora_${VERSION_ID}
+enabled=1
+gpgcheck=0
+EOF
+				fi
+				sudo dnf clean expire-cache
 				#Install base redpesk packages
-				sudo dnf install -y --nogpgcheck afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test
+				if [ "${SPIKPACKINST}" == "no" ]; then
+					sudo dnf install -y ${LIST_PACKAGE_RPM}
+				fi
 				;;
 			*)
 				error_message
@@ -108,10 +185,14 @@ case $ID in
 		case $VERSION_ID in
 			10)
 				#Add redpesk repos 
-				sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}/Debian_${VERSION_ID}"' ./" > /etc/apt/sources.list.d/redpesk-sdk.list'
+				if [ "${WRITE_CONF}" == "yes" ]; then
+					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}/Debian_${VERSION_ID}"' ./" > '"${REPO_CONF_FILE}"
+				fi
 				sudo apt-get update
 				#Install base redpesk packages
-				sudo apt-get install -y afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin
+				if [ "${SPIKPACKINST}" == "no" ]; then
+					sudo apt-get install -y ${LIST_PACKAGE_DEB}
+				fi
 				;;
 			*)
 				error_message
