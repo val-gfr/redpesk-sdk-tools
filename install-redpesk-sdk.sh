@@ -98,7 +98,7 @@ WRITE_CONF="yes"
 
 if [ -f "${REPO_CONF_FILE}" ]; then
 	if [ "${INTERACTIVE}" == "yes" ]; then
-		read -r -p "The conf file ${REPO_CONF_FILE} exists and will be destroyed, keep it? [N/y]" choice
+		read -r -p "The conf file ${REPO_CONF_FILE} already exists and will be destroyed, keep it? [N/y]" choice
 	fi
 	if [ -z "${choice}" ]; then
 		choice="n"
@@ -161,6 +161,19 @@ EOF
 			33 | 34)
 				#Add redpesk repos
 				sudo dnf install -y dnf-plugins-core
+				for OLD_REPO in /etc/yum.repos.d/download.redpesk.bzh_redpesk-lts_arz-1.0_sdk_Fedora_*.repo ;do
+					if [ -f "${OLD_REPO}" ]; then
+						if [ "${INTERACTIVE}" == "yes" ]; then
+							read -r -p "An old conf file has been detected ${OLD_REPO}, remove it? [Y/n]" choice
+						fi
+						if [ -z "${choice}" ]; then
+							choice="y"
+						fi
+						if [ "x$choice" != "xn" ] && [ "x$choice" != "xN" ]; then
+							sudo rm -fr "${OLD_REPO}"
+						fi
+					fi
+				done
 				if [ "${WRITE_CONF}" == "yes" ]; then
 					sudo tee "${REPO_CONF_FILE}" >/dev/null <<EOF
 [redpesk-sdk]
