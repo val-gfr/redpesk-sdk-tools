@@ -567,7 +567,7 @@ function setup_ssh {
     fi
 
     echo "Adding our pubkey to authorized_keys"
-    ${LXC} config device add "${CONTAINER_NAME}" my_authorized_keys disk source="${SSH_DIR}"/id_rsa.pub path="${CONTAINER_SSH_DIR}"/authorized_keys
+    ${LXC} config device add "${CONTAINER_NAME}" my_authorized_keys disk source="${SSH_DIR}" path="${CONTAINER_SSH_DIR}"
     test ! -f "${SSH_DIR}/authorized_keys" && "${SSH_DIR}/authorized_keys"
     grep -v "$(cat "${SSH_DIR}"/id_rsa.pub)" "${SSH_DIR}/authorized_keys" && \
       cat "${SSH_DIR}/id_rsa.pub" >> "${SSH_DIR}/authorized_keys"
