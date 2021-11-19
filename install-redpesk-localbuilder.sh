@@ -475,7 +475,7 @@ function check_image_availability {
         fi
     done
 
-    echo ""${IMAGE_TO_TEST}" not an image alias, trying as a fingerprint ..."
+    echo "${IMAGE_TO_TEST} not an image alias, trying as a fingerprint ..."
     for i in $(${LXC} image list "${IMAGE_REMOTE}": --columns f --format csv); do
         if [ "${i}" == "${IMAGE_TO_TEST}" ]; then
             return 0
@@ -568,7 +568,7 @@ function setup_ssh {
 
     echo "Adding our pubkey to authorized_keys"
     ${LXC} config device add "${CONTAINER_NAME}" my_authorized_keys disk source="${SSH_DIR}" path="${CONTAINER_SSH_DIR}"
-    test ! -f "${SSH_DIR}/authorized_keys" && "${SSH_DIR}/authorized_keys"
+    test ! -f "${SSH_DIR}/authorized_keys" && touch "${SSH_DIR}/authorized_keys" && chmod 0600 "${SSH_DIR}/authorized_keys"
     grep -v "$(cat "${SSH_DIR}"/id_rsa.pub)" "${SSH_DIR}/authorized_keys" && \
       cat "${SSH_DIR}/id_rsa.pub" >> "${SSH_DIR}/authorized_keys"
 
