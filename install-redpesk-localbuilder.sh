@@ -66,8 +66,8 @@ SUPPORTED_OPENSUSE["15.2"]="True"
 
 CONTAINER_USER=devel
 #CONTAINER_GRP=devel
-CONTAINER_UID=1000
-CONTAINER_GID=1000
+CONTAINER_UID=$(id -u)
+CONTAINER_GID=$(id -g)
 
 PROFILE_NAME="redpesk"
 CONTAINER_NAME=""
@@ -255,8 +255,8 @@ function check_container_name_and_type {
 function clean_subxid {
     echo "cleaning your /etc/subuid /etc/subgid files"
 
-    sudo sed -i -e "/^${USER}:$(id -u):1/d" -e "/^root:100000:65536/d" -e "/^root:${CONTAINER_UID}:1/d" /etc/subuid
-    sudo sed -i -e "/^${USER}:$(id -g):1/d" -e "/^root:100000:65536/d" -e "/^root:${CONTAINER_GID}:1/d" /etc/subgid
+    sudo sed -i -e "/^${USER}:${CONTAINER_UID}:1/d" -e "/^root:100000:65536/d" -e "/^root:${CONTAINER_UID}:1/d" /etc/subuid
+    sudo sed -i -e "/^${USER}:${CONTAINER_GID}:1/d" -e "/^root:100000:65536/d" -e "/^root:${CONTAINER_GID}:1/d" /etc/subgid
 }
 
 function clean_hosts {
@@ -452,8 +452,8 @@ function restart_lxd {
 function setup_subgid {
     echo "Allow user ID remapping"
 
-    sudo echo "${USER}:$(id -u):1" | sudo tee -a /etc/subuid > /dev/null
-    sudo echo "${USER}:$(id -g):1" | sudo tee -a /etc/subgid > /dev/null
+    sudo echo "${USER}:${CONTAINER_UID}:1" | sudo tee -a /etc/subuid > /dev/null
+    sudo echo "${USER}:${CONTAINER_GID}:1" | sudo tee -a /etc/subgid > /dev/null
 
     sudo echo "root:100000:65536" | sudo tee -a /etc/subuid /etc/subgid > /dev/null
 
@@ -463,7 +463,7 @@ function setup_subgid {
 
 function setup_remote {
     echo "Adding the LXD image store '${IMAGE_REMOTE}' from: '${IMAGE_STORE}'"
-    ${LXC} remote add ${IMAGE_REMOTE} ${IMAGE_STORE} --password "$IMAGE_STORE_PASSWD" \
+    ${LXC} remote add "${IMAGE_REMOTE}" "${IMAGE_STORE}" --password "${IMAGE_STORE_PASSWD}" \
             --accept-certificate
 }
 
@@ -646,6 +646,9 @@ function setup_repositories {
     MapHostDir ssh "${var_ssh_dir}"
 
     echo "Mapping of host directories to retrieve your files in the container"
+
+    #We need to have the same id for user inside/outside container
+    ${LXC} exec "${CONTAINER_NAME}" -- sed -i "s/1000/${CONTAINER_UID}/g" /etc/passwd
 }
 
 
