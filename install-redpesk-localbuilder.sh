@@ -355,9 +355,6 @@ function config_host {
 
             sudo ln -sf /run/lxd.socket /var/lib/lxd/unix.socket
 
-            # fix to be able to use systemd inside container
-            sudo sed -i -e 's:systemd.unified_cgroup_hierarchy=0 ::' -e 's:rhgb:systemd.unified_cgroup_hierarchy=0 rhgb:' grub /etc/default/grub
-            sudo grub2-mkconfig -o /etc/grub2.cfg
         fi
         config_host_group
         ;;
