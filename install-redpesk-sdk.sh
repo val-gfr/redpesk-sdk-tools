@@ -19,7 +19,7 @@
 # shellcheck disable=SC1091
 source /etc/os-release
 
-SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2/15.3, Fedora 34/33"
+SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2/15.3, Fedora 34/35"
 REDPESK_REPO="https://download.redpesk.bzh/redpesk-lts/arz-1/sdk/"
 
 SPIKPACKINST="no";
@@ -166,7 +166,7 @@ EOF
 		;;
 	fedora)
 		case $VERSION_ID in
-			33 | 34)
+			34 | 35)
 				#Add redpesk repos
 				sudo dnf install -y dnf-plugins-core
 				for OLD_REPO in /etc/yum.repos.d/download.redpesk.bzh_redpesk-lts_arz-1.0_sdk_Fedora_*.repo ;do
