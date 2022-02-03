@@ -1,6 +1,6 @@
 #!/bin/bash
 ###########################################################################
-# Copyright (C) 2020, 2021 IoT.bzh
+# Copyright (C) 2020, 2021, 2022 IoT.bzh
 #
 # Authors:   Thierry Bultel <thierry.bultel@iot.bzh>
 #            Ronan Le Martret <ronan.lemartret@iot.bzh>
@@ -285,10 +285,14 @@ function clean_lxc_container {
         echo "Deleting ${CONTAINER_NAME}"
         ${LXC} delete "${CONTAINER_NAME}" --force > /dev/null 2>&1
     fi
-    REMOTE_LIST=$(${LXC} remote list )
-    if echo "${REMOTE_LIST}" | grep -q "${IMAGE_REMOTE}" ; then
-        echo "Remove ${IMAGE_REMOTE} image store"
-        ${LXC} remote remove "${IMAGE_REMOTE}" > /dev/null 2>&1
+
+    # The 'local' remote is non-removeable
+    if [[ "${IMAGE_REMOTE}" != "local" ]]; then
+        REMOTE_LIST=$(${LXC} remote list )
+        if echo "${REMOTE_LIST}" | grep -q "${IMAGE_REMOTE}" ; then
+            echo "Remove ${IMAGE_REMOTE} image store"
+            ${LXC} remote remove "${IMAGE_REMOTE}" > /dev/null 2>&1
+        fi
     fi
 
     echo "Cleanup done"
@@ -459,9 +463,13 @@ function setup_subgid {
 }
 
 function setup_remote {
-    echo "Adding the LXD image store '${IMAGE_REMOTE}' from: '${IMAGE_STORE}'"
-    ${LXC} remote add "${IMAGE_REMOTE}" "${IMAGE_STORE}" --password "${IMAGE_STORE_PASSWD}" \
-            --accept-certificate
+    if [[ "${IMAGE_REMOTE}" == "local" ]]; then
+        echo "Skipping adding remote as user targeted the 'local' one"
+    else
+        echo "Adding the LXD image store '${IMAGE_REMOTE}' from: '${IMAGE_STORE}'"
+        ${LXC} remote add ${IMAGE_REMOTE} ${IMAGE_STORE} --password "$IMAGE_STORE_PASSWD" \
+                --accept-certificate
+    fi
 }
 
 function check_image_availability {
@@ -737,10 +745,10 @@ function setup_lxc_container {
     check_image_availability "${CONTAINER_FLAVOURS[$CONTAINER_TYPE]}"
 
     # Setup the LXC container
-    #The command "< /dev/null" is a workaround to avoid issue on running this
-    #script using "vagrant provision" (where this fails with: yaml: unmarshal
-    #errors)
-	#see https://github.com/lxc/lxd/issues/6188#issuecomment-572248426
+    # The command "< /dev/null" is a workaround to avoid issue on running this
+    # script using "vagrant provision" (where this fails with: yaml: unmarshal
+    # errors)
+	# See https://github.com/lxc/lxd/issues/6188#issuecomment-572248426
 
     IMAGE_SPEC="${IMAGE_REMOTE}:${CONTAINER_FLAVOURS[$CONTAINER_TYPE]}"
     echo "Pulling in container image from $IMAGE_SPEC ..."

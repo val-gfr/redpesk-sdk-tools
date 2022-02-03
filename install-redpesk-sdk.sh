@@ -1,6 +1,6 @@
 #!/bin/bash
 ###########################################################################
-# Copyright (C) 2020, 2021 IoT.bzh
+# Copyright (C) 2020, 2021, 2022 IoT.bzh
 #
 # Authors:   Corentin Le Gall <corentin.legall@iot.bzh>
 #
