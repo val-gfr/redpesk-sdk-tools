@@ -21,6 +21,7 @@
 
 set -e
 set -o pipefail
+set -x
 
 function usage {
     printf "Usage: \n\
@@ -76,11 +77,16 @@ CONTAINER_TYPE_DEFAULT="localbuilder"
 CONTAINER_IMAGE=""
 CONTAINER_LB_IMAGE_DEFAULT="redpesk-builder/arz-1.0"
 CONTAINER_CP_IMAGE_DEFAULT="redpesk-cloud-publication"
+CONTAINER_DM_IMAGE_DEFAULT="redpesk-demo"
+CONTAINER_DB_IMAGE_DEFAULT="redpesk-demo-builder/arz"
 
 # List of supported container types.
 declare -A CONTAINER_FLAVOURS
 CONTAINER_FLAVOURS=( ["localbuilder"]="${CONTAINER_LB_IMAGE_DEFAULT}" \
-                     ["cloud-publication"]="${CONTAINER_CP_IMAGE_DEFAULT}" )
+                     ["cloud-publication"]="${CONTAINER_CP_IMAGE_DEFAULT}" \
+                     ["redpesk-demo"]="${CONTAINER_DM_IMAGE_DEFAULT}" \
+                     ["redpesk-demo-builder"]="${CONTAINER_DB_IMAGE_DEFAULT}" )
+
 DEFAULT_CNTNR_DIR=${HOME}/my_rp_builder_dir
 INTERACTIVE="yes"
 
@@ -548,7 +554,7 @@ function setup_profile {
 }
 
 function setup_init_lxd {
-    if lxc network show lxdbr0 | grep -wq ipv4.address; then
+    if ${LXC} network show lxdbr0 | grep -wq ipv4.address; then
         echo -e "LXD brigdge already setup."
         echo -e "You are likely already owning another container."
         echo -e "LXD will not be restarted."
@@ -663,8 +669,8 @@ function setup_kvm_device_mapping {
     # If we want that localbuilder could build an image then we will need to
     # map the kvm device with correct permission and owner.
 
-    if [[ "$CONTAINER_TYPE" != "cloud-publication" ]]; then
-      lxc config device add "${CONTAINER_NAME}" kvm unix-char path=/dev/kvm gid=36 mode=0666
+    if [[ "$CONTAINER_TYPE" == "localbuilder" ]]; then
+      ${LXC} config device add "${CONTAINER_NAME}" kvm unix-char path=/dev/kvm gid=36 mode=0666
     fi
 }
 
@@ -682,6 +688,11 @@ function setup_port_redirections {
             listen=tcp:0.0.0.0:21212 connect=tcp:127.0.0.1:30003
         ${LXC} config device add "${CONTAINER_NAME}" redis-cloud-http proxy \
             listen=tcp:0.0.0.0:21213 connect=tcp:127.0.0.1:1234
+    elif [[ "$CONTAINER_TYPE" == "redpesk-demo" ]]; then
+        ${LXC} config device add "${CONTAINER_NAME}" rpwebui proxy \
+            listen=tcp:0.0.0.0:8000 connect=tcp:127.0.0.1:8000
+        ${LXC} config device add "${CONTAINER_NAME}" rpdex proxy \
+            listen=tcp:0.0.0.0:5556 connect=tcp:127.0.0.1:5556
     fi
 }
 
