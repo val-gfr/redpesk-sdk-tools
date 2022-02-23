@@ -34,9 +34,10 @@ function usage {
         -i|--container-image\t: image name of the container to use \n\
                                     (default for container-type 'localbuilder': ${CONTAINER_LB_IMAGE_DEFAULT})\n\
                                     (default for container-type 'cloud-publication': ${CONTAINER_CP_IMAGE_DEFAULT})\n\
-        -r|--remote-name\t: LXD remote name to use (default: ${IMAGE_REMOTE})
-        -u|--remote-url\t\t: LXD remote URL to use (default: ${IMAGE_STORE})
+        -r|--remote-name\t: LXD remote name to use (default: ${IMAGE_REMOTE})\n\
+        -u|--remote-url\t\t: LXD remote URL to use (default: ${IMAGE_STORE})\n\
         -a|--non-interactive\t: run the script in non-interactive mode\n\
+        -m|--map-user\t: map the specified user (inside container) to the current user (default: ${CONTAINER_USER})\n\
         \n\
         %s --help\t\t\tdisplays this text\n" "$0" "$0" "$0" "$0"
     exit
@@ -125,6 +126,10 @@ while [[ $# -gt 0 ]];do
         INTERACTIVE="no";
         shift;
     ;;
+	-m|--map-user)
+		CONTAINER_USER="$2";
+		shift 2;
+	;;
     -h|--help)
         usage;
     ;;
@@ -569,9 +574,9 @@ function setup_ssh {
     CONTAINER_SSH_DIR="/home/${CONTAINER_USER}/.ssh"
     KNOWN_HOSTS_FILE="${SSH_DIR}/known_hosts"
 
-    if [ ! -f "${SSH_DIR}" ]; then
+    if [ ! -d "${SSH_DIR}" ]; then
         mkdir -p "${SSH_DIR}"
-        chmod 0700 "${SSH_DIR}"
+        chmod 0700 "${SSH_DIR}" || true
     fi
 
     if [ ! -f "${SSH_DIR}"/id_rsa.pub ]; then
@@ -661,7 +666,8 @@ function setup_repositories {
     echo "Mapping of host directories to retrieve your files in the container"
 
     #We need to have the same id for user inside/outside container
-    ${LXC} exec "${CONTAINER_NAME}" -- sed -i "s/1000/${CONTAINER_UID}/g" /etc/passwd
+    ${LXC} exec "${CONTAINER_NAME}" -- sed -i "s/^\($CONTAINER_USER:x:\)\$(id -u $CONTAINER_USER)/\1${CONTAINER_UID}/g" /etc/passwd
+    ${LXC} exec "${CONTAINER_NAME}" -- chown -R $CONTAINER_USER /home/$CONTAINER_USER
 }
 
 
