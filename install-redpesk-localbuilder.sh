@@ -576,7 +576,7 @@ function setup_ssh {
 
     if [ ! -d "${SSH_DIR}" ]; then
         mkdir -p "${SSH_DIR}"
-        chmod 0700 "${SSH_DIR}" || true
+        chmod 0700 "${SSH_DIR}"
     fi
 
     if [ ! -f "${SSH_DIR}"/id_rsa.pub ]; then
@@ -666,7 +666,8 @@ function setup_repositories {
     echo "Mapping of host directories to retrieve your files in the container"
 
     #We need to have the same id for user inside/outside container
-    ${LXC} exec "${CONTAINER_NAME}" -- sed -i "s/^\($CONTAINER_USER:x:\)\$(id -u $CONTAINER_USER)/\1${CONTAINER_UID}/g" /etc/passwd
+	local olduid=$(${LXC} exec "${CONTAINER_NAME}" -- id -u $CONTAINER_USER)
+    ${LXC} exec "${CONTAINER_NAME}" -- sed -i "s/^\($CONTAINER_USER:x:\)${olduid}/\1${CONTAINER_UID}/g" /etc/passwd
     ${LXC} exec "${CONTAINER_NAME}" -- chown -R $CONTAINER_USER /home/$CONTAINER_USER
 }
 
@@ -738,6 +739,9 @@ function fix_container {
     ${LXC} exec "${CONTAINER_NAME}" -- bash -c 'sed -i -e '\''/^DNSSEC/d'\''  /etc/systemd/resolved.conf'
     #Add "DNSSEC=no" At the end of the file /etc/systemd/resolved.conf
     ${LXC} exec "${CONTAINER_NAME}" -- bash -c 'sed -i -e '\''$ aDNSSEC=no'\'' /etc/systemd/resolved.conf'
+
+	echo "Adjust permissions on home directory /home/${CONTAINER_USER}"
+    ${LXC} exec "${CONTAINER_NAME}" -- bash -c "chown -R ${CONTAINER_USER} /home/${CONTAINER_USER}"
 
     ${LXC} config set "${CONTAINER_NAME}" raw.idmap "$(echo -e "uid $(id -u) ${CONTAINER_UID}\ngid $(id -g) ${CONTAINER_GID}")"
 }
