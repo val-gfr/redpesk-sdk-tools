@@ -354,7 +354,8 @@ function config_host {
             sudo dnf remove --assumeyes lxc
             # Now install LXD
             sudo dnf copr enable --assumeyes ganto/lxc4
-            sudo dnf install --assumeyes lxc lxd
+			# NB: package 'attr' is needed because it provides /usr/bin/setfattr, required by lxd
+            sudo dnf install --assumeyes attr lxc lxd
             sudo systemctl enable --now lxc lxd
 
             sudo ln -sf /run/lxd.socket /var/lib/lxd/unix.socket
