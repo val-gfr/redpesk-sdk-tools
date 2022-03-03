@@ -697,9 +697,9 @@ function setup_port_redirections {
             listen=tcp:0.0.0.0:21213 connect=tcp:127.0.0.1:1234
     elif [[ "$CONTAINER_TYPE" == "redpesk-demo" ]]; then
         ${LXC} config device add "${CONTAINER_NAME}" rpwebui proxy \
-            listen=tcp:0.0.0.0:8000 connect=tcp:127.0.0.1:8000
+            listen=tcp:0.0.0.0:8002 connect=tcp:127.0.0.1:8002
         ${LXC} config device add "${CONTAINER_NAME}" rpdex proxy \
-            listen=tcp:0.0.0.0:5556 connect=tcp:127.0.0.1:5556
+            listen=tcp:0.0.0.0:8003 connect=tcp:127.0.0.1:8003
     fi
 }
 
