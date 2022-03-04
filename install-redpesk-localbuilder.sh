@@ -36,7 +36,6 @@ function usage {
         -r|--remote-name\t: LXD remote name to use (default: ${IMAGE_REMOTE})\n\
         -u|--remote-url\t\t: LXD remote URL to use (default: ${IMAGE_STORE})\n\
         -a|--non-interactive\t: run the script in non-interactive mode\n\
-        -m|--map-user\t: map the specified user (inside container) to the current user (default: ${CONTAINER_USER})\n\
         \n\
         %s --help\t\t\tdisplays this text\n" "$0" "$0" "$0" "$0"
     exit
@@ -126,6 +125,8 @@ while [[ $# -gt 0 ]];do
         shift;
     ;;
 	-m|--map-user)
+		# advanced usage (not documented)
+        # -m|--map-user: map the specified user (inside container) to the current user (default: ${CONTAINER_USER})
 		CONTAINER_USER="$2";
 		shift 2;
 	;;
@@ -549,12 +550,11 @@ function setup_profile {
     else
         echo "Create a '${PROFILE_NAME}' LXD Profile"
         ${LXC} profile create "${PROFILE_NAME}"
+		${LXC} profile set "${PROFILE_NAME}" security.privileged true
+		${LXC} profile set "${PROFILE_NAME}" security.nesting true
+		${LXC} profile set "${PROFILE_NAME}" security.syscalls.blacklist "keyctl errno 38\nkeyctl_chown errno 38"
+		${LXC} profile device add redpesk loop-control unix-char path=/dev/loop-control
     fi
-
-    ${LXC} profile set "${PROFILE_NAME}" security.privileged true
-    ${LXC} profile set "${PROFILE_NAME}" security.nesting true
-    ${LXC} profile set "${PROFILE_NAME}" security.syscalls.blacklist "keyctl errno 38\nkeyctl_chown errno 38"
-    ${LXC} profile device add redpesk loop-control unix-char path=/dev/loop-control
 }
 
 function setup_init_lxd {
