@@ -2,7 +2,10 @@
 ###########################################################################
 # Copyright (C) 2020, 2021, 2022 IoT.bzh
 #
-# Authors:   Corentin Le Gall <corentin.legall@iot.bzh>
+# Authors: Armand Bénéteau <armand.beneteau@iot.bzh>
+#          Corentin Le Gall <corentin.legall@iot.bzh>
+#          Ronan Le Martret <ronan.lemartret@iot.bzh>
+#          Vincent Rubiolo <vincent.rubiolo@iot.bzh>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +20,14 @@
 # limitations under the License.
 ###########################################################################
 # shellcheck disable=SC1091
+shopt -s extglob
 source /etc/os-release
 
 SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2/15.3, Fedora 34/35"
-REDPESK_REPO="https://download.redpesk.bzh/redpesk-lts/arz-1/sdk/"
+REDPESK_REPO="https://download.redpesk.bzh/redpesk-lts/arz-1.0-update/sdk/"
+
+# Potentially existing repositories for Fedora, to be removed
+REDPESK_REPO_FEDORA_OLD="download.redpesk.bzh_redpesk-lts_arz-1.0?(-update)_sdk_Fedora_*.repo"
 
 SPIKPACKINST="no";
 INTERACTIVE="yes";
@@ -169,7 +176,7 @@ EOF
 			34 | 35)
 				#Add redpesk repos
 				sudo dnf install -y dnf-plugins-core
-				for OLD_REPO in /etc/yum.repos.d/download.redpesk.bzh_redpesk-lts_arz-1.0_sdk_Fedora_*.repo ;do
+				for OLD_REPO in /etc/yum.repos.d/$REDPESK_REPO_FEDORA_OLD ;do
 					if [ -f "${OLD_REPO}" ]; then
 						if [ "${INTERACTIVE}" == "yes" ]; then
 							read -r -p "An old conf file has been detected ${OLD_REPO}, remove it? [Y/n]" choice
