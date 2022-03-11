@@ -24,7 +24,11 @@ shopt -s extglob
 source /etc/os-release
 
 SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2/15.3, Fedora 34/35"
-REDPESK_REPO="https://download.redpesk.bzh/redpesk-lts/arz-1.0-update/sdk/"
+
+#REDPESK_REPO can be given in command line, if so REDPESK_REPO must be the full path for the distro used.
+REDPESK_REPO=""
+
+REDPESK_BASE_REPO_DEFAULT="https://download.redpesk.bzh/redpesk-lts/arz-1.0-update/sdk/"
 
 # Potentially existing repositories for Fedora, to be removed
 REDPESK_REPO_FEDORA_OLD="download.redpesk.bzh_redpesk-lts_arz-1.0?(-update)_sdk_Fedora_*.repo"
@@ -123,6 +127,55 @@ if [ -f "${REPO_CONF_FILE}" ]; then
 	fi
 fi
 
+if [ -z "${REDPESK_REPO}" ]; then
+	case $ID in
+		ubuntu)
+			case $VERSION_ID in
+				20.04)
+					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/Ubuntu_${VERSION_ID}"
+					;;
+				*)
+					error_message
+					;;
+			esac
+			;;
+		opensuse-leap)
+			case $VERSION_ID in
+				15.2 | 15.3)
+					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/openSUSE_Leap_${VERSION_ID}"
+					;;
+				*)
+					error_message
+					;;
+			esac
+			;;
+		fedora)
+			case $VERSION_ID in
+				34 | 35)
+					#Add redpesk repos
+					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/Fedora_${VERSION_ID}"
+					;;
+				*)
+					error_message
+					;;
+			esac
+			;;
+		debian)
+			case $VERSION_ID in
+				10)
+					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/Debian_${VERSION_ID}"
+					;;
+				*)
+					error_message
+					;;
+			esac
+			;;
+		*)
+			error_message
+			;;
+	esac
+fi
+
 case $ID in
 	ubuntu)
 		case $VERSION_ID in
@@ -131,7 +184,7 @@ case $ID in
 				sudo apt install -y wget add-apt-key gnupg
 				#wget -O - "${REDPESK_REPO}"Release.key | sudo apt-key add - 
 				if [ "${WRITE_CONF}" == "yes" ]; then
-					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}/Ubuntu_${VERSION_ID}"' ./" > '"${REPO_CONF_FILE}"
+					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > '"${REPO_CONF_FILE}"
 				fi
 				sudo apt-get update
 				#Install base redpesk packages
@@ -148,13 +201,13 @@ case $ID in
 		case $VERSION_ID in
 			15.2 | 15.3)
 				#Add redpesk repos
-				sudo zypper ar -f "${REDPESK_REPO}/openSUSE_Leap_${VERSION_ID}" redpesk-sdk
+				sudo zypper ar -f "${REDPESK_REPO}" redpesk-sdk
 
 				if [ "${WRITE_CONF}" == "yes" ]; then
 				sudo tee "${REPO_CONF_FILE}" >/dev/null <<EOF
 [redpesk-sdk]
 name=redpesk-sdk
-baseurl=${REDPESK_REPO}/openSUSE_Leap_${VERSION_ID}
+baseurl=${REDPESK_REPO}
 enabled=1
 gpgcheck=0
 EOF
@@ -193,7 +246,7 @@ EOF
 					sudo tee "${REPO_CONF_FILE}" >/dev/null <<EOF
 [redpesk-sdk]
 name=redpesk-sdk
-baseurl=${REDPESK_REPO}/Fedora_${VERSION_ID}
+baseurl=${REDPESK_REPO}
 enabled=1
 gpgcheck=0
 EOF
@@ -214,7 +267,7 @@ EOF
 			10)
 				#Add redpesk repos 
 				if [ "${WRITE_CONF}" == "yes" ]; then
-					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}/Debian_${VERSION_ID}"' ./" > '"${REPO_CONF_FILE}"
+					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > '"${REPO_CONF_FILE}"
 				fi
 				sudo apt-get update
 				#Install base redpesk packages
