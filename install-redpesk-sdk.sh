@@ -186,7 +186,7 @@ case $ID in
 				if [ "${WRITE_CONF}" == "yes" ]; then
 					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > '"${REPO_CONF_FILE}"
 				fi
-				sudo apt-get update
+				sudo apt-get update  --yes
 				#Install base redpesk packages
 				if [ "${SPIKPACKINST}" == "no" ]; then
 					sudo apt install -y ${LIST_PACKAGE_DEB}
@@ -269,7 +269,7 @@ EOF
 				if [ "${WRITE_CONF}" == "yes" ]; then
 					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > '"${REPO_CONF_FILE}"
 				fi
-				sudo apt-get update
+				sudo apt-get update --yes
 				#Install base redpesk packages
 				if [ "${SPIKPACKINST}" == "no" ]; then
 					sudo apt-get install -y ${LIST_PACKAGE_DEB}

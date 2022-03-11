@@ -328,7 +328,7 @@ function config_host {
 
     case ${ID} in
     ubuntu)
-        sudo apt-get update
+        sudo apt-get update --yes
         if [ -z "${HAVE_JQ}" ];then
             echo "Installing jq"
             sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes jq
@@ -340,7 +340,7 @@ function config_host {
         config_host_group
         ;;
     debian)
-        sudo apt-get update
+        sudo apt-get update  --yes
         if [ -z "${HAVE_JQ}" ];then
             echo "Installing jq"
             sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes jq
