@@ -1,0 +1,25 @@
+pipeline {
+    agent {
+        node {
+            label "vagrant-ci"
+        }
+    }    
+    stages {
+        stage('Clean vagrant CI') {
+            steps {
+                sshagent(credentials: ['jenkins_worker']) {
+                    sh '''
+                        for uuid in $(VBoxManage list runningvms | awk '{print $2;}' ); do VBoxManage controlvm  ${uuid} poweroff; done
+                        for uuid in $(VBoxManage list vms | awk '{print $2;}' ); do VBoxManage unregistervm ${uuid}; done
+                        for uuid in $(VBoxManage list vms | grep "<inaccessible>" | awk '{print $2;}' ); do VBoxManage unregistervm ${uuid}; done
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            mail bcc: '', body: "<b>Example</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL de build: ${env.BUILD_URL}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "ERROR CI: Project name -> ${env.JOB_NAME}", to: "ronan.lemartret@gmail.com";  
+        }
+    }
+}

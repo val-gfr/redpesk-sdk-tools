@@ -16,6 +16,8 @@ listepath=(
 RESULT_DST="/home/vagrant/ci/${ID}_${VERSION_ID}_xunit.xml"
 mkdir -p "$(dirname "${RESULT_DST}")"
 
+exitval=0
+
 test() {
     #write the tests result in the xunit.xml file
     echo "<testcase classname='VMsdk.${ID}.${VERSION_ID}' file='VMsdk.sh' line='$3' name='$2_${ID}.${VERSION_ID}.$1'>" >> "${RESULT_DST}"
@@ -91,7 +93,6 @@ sdktest () {
                 test "failure" "test_afm-test-result" "$line"
             else 
                 test "success" "test_afm-test-result" "$line"
-                exitval=0
             fi
             if [ "$testskip" -ne "0" ]; then
                 skip=$(grep "skipped" "test.log" | cut -d"," -f4)
@@ -101,7 +102,6 @@ sdktest () {
     else 
         test "error" "test_afm-test" "$line"
     fi
-    return $exitval
 }
 
 echo "distribution: $PRETTY_NAME"
@@ -115,6 +115,6 @@ case ${ID} in
         ;;
 esac
 echo -e '<?xml version="1.0" encoding="UTF-8"?>\n<testsuites>\n<testsuite>' > "${RESULT_DST}"
-exitval=$(sdktest "/${ID}/${VERSION_ID}/")
+sdktest "/${ID}/${VERSION_ID}/"
 echo -e '</testsuite>\n</testsuites>' >> "${RESULT_DST}"
 exit "$exitval"

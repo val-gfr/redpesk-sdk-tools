@@ -2,3 +2,4 @@ ci_log
 *.log
 xml/
 manjaro/
+*xunit.xml
