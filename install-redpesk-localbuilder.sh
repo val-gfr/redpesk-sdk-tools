@@ -63,6 +63,7 @@ SUPPORTED_UBUNTU["18.10"]="True"
 SUPPORTED_UBUNTU["20.04"]="True"
 SUPPORTED_UBUNTU["20.10"]="True"
 SUPPORTED_OPENSUSE["15.2"]="True"
+SUPPORTED_OPENSUSE["15.3"]="True"
 
 CONTAINER_USER=devel
 #CONTAINER_GRP=devel
@@ -381,7 +382,7 @@ function config_host {
             sudo zypper install --no-confirm jq
         fi
         if [ -z "${HAVE_LXC}" ];then
-            sudo zypper install --no-confirm lxd
+            sudo zypper install --no-confirm lxd attr iptables
             sudo systemctl enable --now lxd
         fi
         config_host_group
