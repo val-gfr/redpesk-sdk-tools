@@ -71,6 +71,7 @@ CONTAINER_UID=$(id -u)
 CONTAINER_GID=$(id -g)
 
 PROFILE_NAME="redpesk"
+STORAGE_NAME=""
 CONTAINER_NAME=""
 CONTAINER_TYPE=""
 CONTAINER_TYPE_DEFAULT="localbuilder"
@@ -558,6 +559,24 @@ function setup_profile {
     fi
 }
 
+function setup_storage {
+    declare -i valid=0
+    STORAGE_POOLS_LIST=($(${LXC} storage list -f csv | awk -F, '{print $1}'))
+    STORAGE_NAME=${STORAGE_POOLS_LIST[0]}
+    echo "Which storage to use in [${STORAGE_POOLS_LIST[@]}]"
+    read -r -p "[Default: $STORAGE_NAME]:" STORAGE_NAME
+    for storage in ${STORAGE_POOLS_LIST[@]}; do
+	if [ "$STORAGE_NAME" == "$storage" ]; then
+            valid=1
+        fi
+    done
+    if [ $valid -eq 0 ]; then
+        echo -e "Unknown storage $STORAGE_NAME"
+        STORAGE_NAME=${STORAGE_POOLS_LIST[0]}
+    fi
+    echo -e "Using storage: $STORAGE_NAME"
+}
+
 function setup_init_lxd {
     if ${LXC} network show lxdbr0 | grep -wq ipv4.address; then
         echo -e "LXD brigdge already setup."
@@ -767,6 +786,8 @@ function setup_lxc_container {
 
     setup_profile
 
+    setup_storage
+
     check_image_availability "${CONTAINER_FLAVOURS[$CONTAINER_TYPE]}"
 
     # Setup the LXC container
@@ -777,7 +798,7 @@ function setup_lxc_container {
 
     IMAGE_SPEC="${IMAGE_REMOTE}:${CONTAINER_FLAVOURS[$CONTAINER_TYPE]}"
     echo "Pulling in container image from $IMAGE_SPEC ..."
-    ${LXC} launch "${IMAGE_SPEC}" "${CONTAINER_NAME}" --profile default --profile "${PROFILE_NAME}" < /dev/null
+    ${LXC} launch "${IMAGE_SPEC}" "${CONTAINER_NAME}" --profile default --profile "${PROFILE_NAME}" --storage "${STORAGE_NAME}" < /dev/null
 
     setup_container_ip
 
