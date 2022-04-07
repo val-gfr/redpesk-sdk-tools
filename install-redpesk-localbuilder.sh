@@ -5,6 +5,7 @@
 # Authors:   Thierry Bultel <thierry.bultel@iot.bzh>
 #            Ronan Le Martret <ronan.lemartret@iot.bzh>
 #            Vincent Rubiolo <vincent.rubiolo@iot.bzh>
+#            Valentin Lefebvre <valentin.lefebvre@iot.bzh>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,6 +34,7 @@ function usage {
         -i|--container-image\t: image name of the container to use \n\
                                     (default for container-type 'localbuilder': ${CONTAINER_LB_IMAGE_DEFAULT})\n\
                                     (default for container-type 'cloud-publication': ${CONTAINER_CP_IMAGE_DEFAULT})\n\
+        -s|--lxd-storage-pool\t: give a specific LXD storage pool to use (default: ${STORAGE_POOL_NAME_DEFAULT})\n\
         -r|--remote-name\t: LXD remote name to use (default: ${IMAGE_REMOTE})\n\
         -u|--remote-url\t\t: LXD remote URL to use (default: ${IMAGE_STORE})\n\
         -a|--non-interactive\t: run the script in non-interactive mode\n\
@@ -71,7 +73,8 @@ CONTAINER_UID=$(id -u)
 CONTAINER_GID=$(id -g)
 
 PROFILE_NAME="redpesk"
-STORAGE_NAME=""
+STORAGE_POOL_NAME=""
+STORAGE_POOL_NAME_DEFAULT="default"
 CONTAINER_NAME=""
 CONTAINER_TYPE=""
 CONTAINER_TYPE_DEFAULT="localbuilder"
@@ -112,6 +115,10 @@ while [[ $# -gt 0 ]];do
     ;;
     -i|--container-image)
         CONTAINER_IMAGE="$2";
+        shift 2;
+    ;;
+    -s|--lxd-storage-pool)
+        STORAGE_POOL_NAME="$2";
         shift 2;
     ;;
     -r|--remote-name)
@@ -325,6 +332,7 @@ function config_host {
     echo "Config Lxc on the host"
     HAVE_LXC="$(which lxc)" || echo "No lxc on this host"
     HAVE_JQ="$(which jq)" || echo "No jq on this host"
+    HAVE_AWK="$(which awk)" || echo "No awk on this host"
 
     case ${ID} in
     ubuntu)
@@ -336,6 +344,10 @@ function config_host {
         if [ -z "${HAVE_LXC}" ];then
             echo "Installing lxd from apt"
             sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes lxd
+        fi
+        if [ -z "${HAVE_AWK}" ];then
+            echo "Installing awk from apt"
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes gawk
         fi
         config_host_group
         ;;
@@ -354,6 +366,10 @@ function config_host {
             echo "Installing lxd from snap"
             sudo snap install core
             sudo snap install lxd
+        fi
+        if [ -z "${HAVE_AWK}" ];then
+            echo "Installing awk"
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes gawk
         fi
         config_host_group
         ;;
@@ -374,6 +390,10 @@ function config_host {
             sudo ln -sf /run/lxd.socket /var/lib/lxd/unix.socket
 
         fi
+        if [ -z "${HAVE_AWK}" ];then
+            echo "Installing awk"
+            sudo dnf install --assumeyes gawk
+        fi
         config_host_group
         ;;
     opensuse-leap)
@@ -386,6 +406,10 @@ function config_host {
             sudo zypper install --no-confirm lxd attr iptables
             sudo systemctl enable --now lxd
         fi
+        if [ -z "${HAVE_AWK}" ];then
+            echo "Installing awk"
+            sudo zypper install --no-confirm gawk
+        fi
         config_host_group
         ;;
     manjaro)
@@ -397,6 +421,10 @@ function config_host {
             echo "Installing lxd ..."
             sudo pacman -S lxd
             sudo systemctl enable lxd
+        fi
+        if [ -z "${HAVE_AWK}" ];then
+            echo "Installing awk ..."
+            sudo pacman -S awk
         fi
         config_host_group
         ;;
@@ -559,27 +587,31 @@ function setup_profile {
     fi
 }
 
-function setup_storage {
-    declare -i valid=0
+function setup_storage_pool {
+    declare -i storage_name_is_valid=0
     STORAGE_POOLS_LIST=($(${LXC} storage list -f csv | awk -F, '{print $1}'))
-    STORAGE_NAME=${STORAGE_POOLS_LIST[0]}
-    echo "Which storage to use in [${STORAGE_POOLS_LIST[@]}]"
-    read -r -p "[Default: $STORAGE_NAME]:" STORAGE_NAME
+    if [ -z $STORAGE_POOL_NAME ]; then
+        STORAGE_POOL_NAME=${STORAGE_POOL_NAME_DEFAULT}
+        if [ "${INTERACTIVE}" == "yes" ]; then
+            read -r -p "$(echo "Which storage to use in (${STORAGE_POOLS_LIST[@]})") [Default: $STORAGE_POOL_NAME]:" STORAGE_POOL_NAME
+        fi
+    fi
+    
     for storage in ${STORAGE_POOLS_LIST[@]}; do
-	if [ "$STORAGE_NAME" == "$storage" ]; then
-            valid=1
+        if [ "$STORAGE_POOL_NAME" == "$storage" ]; then
+            storage_name_is_valid=1
         fi
     done
-    if [ $valid -eq 0 ]; then
-        echo -e "Unknown storage $STORAGE_NAME"
-        STORAGE_NAME=${STORAGE_POOLS_LIST[0]}
+    if [ $storage_name_is_valid -eq 0 ]; then
+        echo -e "Unknown LXD storage pool $STORAGE_POOL_NAME"
+        STORAGE_POOL_NAME=${STORAGE_POOLS_LIST[0]}
     fi
-    echo -e "Using storage: $STORAGE_NAME"
+    echo -e "Using LXD storage pool: $STORAGE_POOL_NAME"
 }
 
 function setup_init_lxd {
     if ${LXC} network show lxdbr0 | grep -wq ipv4.address; then
-        echo -e "LXD brigdge already setup."
+        echo -e "LXD network bridge already setup."
         echo -e "You are likely already owning another container."
         echo -e "LXD will not be restarted."
     else
@@ -786,7 +818,7 @@ function setup_lxc_container {
 
     setup_profile
 
-    setup_storage
+    setup_storage_pool
 
     check_image_availability "${CONTAINER_FLAVOURS[$CONTAINER_TYPE]}"
 
@@ -798,7 +830,7 @@ function setup_lxc_container {
 
     IMAGE_SPEC="${IMAGE_REMOTE}:${CONTAINER_FLAVOURS[$CONTAINER_TYPE]}"
     echo "Pulling in container image from $IMAGE_SPEC ..."
-    ${LXC} launch "${IMAGE_SPEC}" "${CONTAINER_NAME}" --profile default --profile "${PROFILE_NAME}" --storage "${STORAGE_NAME}" < /dev/null
+    ${LXC} launch "${IMAGE_SPEC}" "${CONTAINER_NAME}" --profile default --profile "${PROFILE_NAME}" --storage "${STORAGE_POOL_NAME}" < /dev/null
 
     setup_container_ip
 
