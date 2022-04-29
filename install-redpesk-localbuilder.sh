@@ -700,6 +700,8 @@ function setup_port_redirections {
             listen=tcp:0.0.0.0:8002 connect=tcp:127.0.0.1:8002
         ${LXC} config device add "${CONTAINER_NAME}" rpdex proxy \
             listen=tcp:0.0.0.0:8003 connect=tcp:127.0.0.1:8003
+        ${LXC} config device add "${CONTAINER_NAME}" rpkorneli proxy \
+            listen=tcp:0.0.0.0:9000 connect=tcp:127.0.0.1:9000
     fi
 }
 
