@@ -30,15 +30,11 @@ REDPESK_REPO=""
 
 REDPESK_BASE_REPO_DEFAULT="https://download.redpesk.bzh/redpesk-lts/arz-1.0-update/sdk/"
 
-# Potentially existing repositories for Fedora, to be removed
-REDPESK_REPO_FEDORA_OLD="download.redpesk.bzh_redpesk-lts_arz-1.0?(-update)_sdk_Fedora_*.repo"
-
 SPIKPACKINST="no";
 INTERACTIVE="yes";
 
 LIST_PACKAGE_DEB="afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin afb-client redpesk-cli"
 LIST_PACKAGE_RPM="afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test afb-client redpesk-cli"
-
 
 function help {
     echo -e "Supported distributions : $SUPPORTED_DISTROS\n
@@ -229,19 +225,7 @@ EOF
 			35 | 36)
 				#Add redpesk repos
 				sudo dnf install -y dnf-plugins-core
-				for OLD_REPO in /etc/yum.repos.d/$REDPESK_REPO_FEDORA_OLD ;do
-					if [ -f "${OLD_REPO}" ]; then
-						if [ "${INTERACTIVE}" == "yes" ]; then
-							read -r -p "An old conf file has been detected ${OLD_REPO}, remove it? [Y/n]" choice
-						fi
-						if [ -z "${choice}" ]; then
-							choice="y"
-						fi
-						if [ "x$choice" != "xn" ] && [ "x$choice" != "xN" ]; then
-							sudo rm -fr "${OLD_REPO}"
-						fi
-					fi
-				done
+
 				if [ "${WRITE_CONF}" == "yes" ]; then
 					sudo tee "${REPO_CONF_FILE}" >/dev/null <<EOF
 [redpesk-sdk]
