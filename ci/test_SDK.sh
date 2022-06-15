@@ -8,8 +8,9 @@ listepath=(
 ["/fedora/36/"]="http://silo.redpesk.iot/redpesk/sdk/master/Fedora_36/latest/"
 ["/debian/10/"]="http://silo.redpesk.iot/redpesk/sdk/master/Debian_10/latest/"
 ["/ubuntu/20.04/"]="http://silo.redpesk.iot/redpesk/sdk/master/Ubuntu_20.04/latest/"
-["/opensuse-leap/15.2/"]="http://silo.redpesk.iot/redpesk/sdk/master/openSUSE_Leap_15.2/latest/"
+["/ubuntu/22.04/"]="http://silo.redpesk.iot/redpesk/sdk/master/Ubuntu_22.04/latest/"
 ["/opensuse-leap/15.3/"]="http://silo.redpesk.iot/redpesk/sdk/master/openSUSE_Leap_15.3/latest/"
+["/opensuse-leap/15.4/"]="http://silo.redpesk.iot/redpesk/sdk/master/openSUSE_Leap_15.4/latest/"
 )
 
 RESULT_DST="/home/vagrant/ci/${ID}_${VERSION_ID}_xunit.xml"
