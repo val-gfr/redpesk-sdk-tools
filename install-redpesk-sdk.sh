@@ -23,7 +23,7 @@
 shopt -s extglob
 source /etc/os-release
 
-SUPPORTED_DISTROS="Ubuntu 20.04, OpenSUSE Leap 15.2/15.3, Fedora 35/36"
+SUPPORTED_DISTROS="Ubuntu 20.04/22.04, OpenSUSE Leap 15.3/15.4, Fedora 35/36"
 
 #REDPESK_REPO can be given in command line, if so REDPESK_REPO must be the full path for the distro used.
 REDPESK_REPO=""
@@ -127,7 +127,7 @@ if [ -z "${REDPESK_REPO}" ]; then
 	case $ID in
 		ubuntu)
 			case $VERSION_ID in
-				20.04)
+				20.04 | 22.04)
 					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/Ubuntu_${VERSION_ID}"
 					;;
 				*)
@@ -137,7 +137,7 @@ if [ -z "${REDPESK_REPO}" ]; then
 			;;
 		opensuse-leap)
 			case $VERSION_ID in
-				15.2 | 15.3)
+				15.3 | 15.4)
 					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/openSUSE_Leap_${VERSION_ID}"
 					;;
 				*)
@@ -175,7 +175,7 @@ fi
 case $ID in
 	ubuntu)
 		case $VERSION_ID in
-			20.04)
+			20.04 | 22.04)
 				#Add redpesk repos
 				sudo apt install -y wget add-apt-key gnupg
 				#wget -O - "${REDPESK_REPO}"Release.key | sudo apt-key add - 
@@ -195,7 +195,7 @@ case $ID in
 		;;
 	opensuse-leap)
 		case $VERSION_ID in
-			15.2 | 15.3)
+			15.3 | 15.4)
 				#Add redpesk repos
 				sudo zypper ar -f "${REDPESK_REPO}" redpesk-sdk
 
