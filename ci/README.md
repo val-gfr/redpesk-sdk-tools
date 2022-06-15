@@ -20,17 +20,16 @@ This setup has been tested with Vagrant 2.2.14 and VirtualBox 6.1.16 on Fedora
 ### Select your OS
 
 ```bash
-OS=ubuntu_18.04
-OS=ubuntu_18.10
 OS=ubuntu_20.04
-OS=ubuntu_20.10
+OS=ubuntu_22.04
 
 OS=debian_10
 
-OS=opensuse_15.2
+OS=opensuse_15.3
+OS=opensuse_15.4
 
-OS=fedora_32
-OS=fedora_33
+OS=fedora_35
+OS=fedora_36
 ```
 
 ### Quick test/regression testing
