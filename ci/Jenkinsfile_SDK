@@ -4,6 +4,11 @@ pipeline {
             label "vagrant-ci"
         }
     }
+
+    triggers {
+        cron('H 4 * * *')
+    }
+
     stages {
         stage('Test SDK') {
             steps {

@@ -23,7 +23,7 @@ This setup has been tested with Vagrant 2.2.14 and VirtualBox 6.1.16 on Fedora
 OS=ubuntu_20.04
 OS=ubuntu_22.04
 
-OS=debian_10
+OS=debian_11
 
 OS=opensuse_15.3
 OS=opensuse_15.4

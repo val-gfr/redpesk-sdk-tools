@@ -3,7 +3,12 @@ pipeline {
         node {
             label "vagrant-ci"
         }
-    }    
+    }
+
+    triggers {
+        cron('H 2 * * *')
+    }
+
     stages {
         stage('Test SDK') {
             steps {

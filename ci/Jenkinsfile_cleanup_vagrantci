@@ -3,7 +3,12 @@ pipeline {
         node {
             label "vagrant-ci"
         }
-    }    
+    }
+
+    triggers {
+        cron('H 5 * * *')
+    }
+
     stages {
         stage('Clean vagrant CI') {
             steps {
