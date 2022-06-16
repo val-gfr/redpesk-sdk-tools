@@ -6,7 +6,7 @@ declare -A listepath
 listepath=(
 ["/fedora/35/"]="http://silo.redpesk.iot/redpesk/sdk/master/Fedora_35/latest/"
 ["/fedora/36/"]="http://silo.redpesk.iot/redpesk/sdk/master/Fedora_36/latest/"
-["/debian/10/"]="http://silo.redpesk.iot/redpesk/sdk/master/Debian_10/latest/"
+["/debian/11/"]="http://silo.redpesk.iot/redpesk/sdk/master/Debian_11/latest/"
 ["/ubuntu/20.04/"]="http://silo.redpesk.iot/redpesk/sdk/master/Ubuntu_20.04/latest/"
 ["/ubuntu/22.04/"]="http://silo.redpesk.iot/redpesk/sdk/master/Ubuntu_22.04/latest/"
 ["/opensuse-leap/15.3/"]="http://silo.redpesk.iot/redpesk/sdk/master/openSUSE_Leap_15.3/latest/"

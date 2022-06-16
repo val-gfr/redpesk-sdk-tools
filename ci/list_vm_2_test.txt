@@ -1,6 +1,6 @@
 fedora/35/
 fedora/36/
-debian/10/
+debian/11/
 ubuntu/20.04/
 ubuntu/22.04/
 opensuse-leap/15.3/

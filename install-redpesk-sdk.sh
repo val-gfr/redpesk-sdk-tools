@@ -158,7 +158,7 @@ if [ -z "${REDPESK_REPO}" ]; then
 			;;
 		debian)
 			case $VERSION_ID in
-				10)
+				11)
 					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/Debian_${VERSION_ID}"
 					;;
 				*)
@@ -248,7 +248,7 @@ EOF
 		;;
 	debian)
 		case $VERSION_ID in
-			10)
+			11)
 				#Add redpesk repos 
 				if [ "${WRITE_CONF}" == "yes" ]; then
 					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > '"${REPO_CONF_FILE}"
