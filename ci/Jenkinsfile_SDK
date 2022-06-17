@@ -19,17 +19,29 @@ pipeline {
                     for (String os_paths : data.split("\n")) {
                         for (String os_path : os_paths.split(" ")) {
                             def local_os_path = os_path
-                            tests_by_os["Test SDK ${os_path}"] = {
-                                        stage("Test SDK ${local_os_path}") {
+                            //tests_by_os["Test SDK ${os_path}"] = {
+                                        stage("Test SDK ${local_os_path} Master") {
+                                            sh """
+                                            cd ci
+                                            ./run_SDK_ci.sh --vm-path ${local_os_path} --branch master --destroy
+                                        """
+                                        }
+                                        stage("Test SDK ${local_os_path} Next") {
+                                            sh """
+                                            cd ci
+                                            ./run_SDK_ci.sh --vm-path ${local_os_path} --branch master --destroy
+                                        """
+                                        }
+                                        stage("Test SDK ${local_os_path} upstream") {
                                             sh """
                                             cd ci
                                             ./run_SDK_ci.sh --vm-path ${local_os_path} --destroy
                                         """
                                         }
-                                }
+                            //    }
                         }
                     }
-                    parallel tests_by_os
+                    //parallel tests_by_os
                 }
             }
         }

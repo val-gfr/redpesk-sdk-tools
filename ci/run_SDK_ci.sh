@@ -24,6 +24,8 @@ error_message () {
 	echo "Your distribution, $PRETTY_NAME, is not supported. Supported distribution are $SUPPORTED_DISTROS. For more information, please check https://docs.redpesk.bzh/"
 }
 
+BRANCH="upstream"
+
 #test arguments
 while [[ $# -gt 0 ]]; do
     OPTION="$1"
@@ -34,6 +36,10 @@ while [[ $# -gt 0 ]]; do
     -d | --destroy)
         DESTROY_AFTER="y"
         shift 1;
+    ;;
+    -b | --branch)
+        BRANCH="$2"
+        shift 2;
     ;;
     -v | --vm-path)
         if [ -z $2 ]; then 
@@ -64,7 +70,13 @@ run_all_test(){
 run_one_test(){
     cd "$1" || exit
     vagrant up --no-provision
-    vagrant provision --provision-with test-sdk-script,install-redpesk-sdk
+    if [ "${BRANCH}" == "master" ]; then
+        vagrant provision --provision-with test-sdk-script,test-sdk-master-script,install-redpesk-sdk
+    elif [ "${BRANCH}" == "next" ]; then
+        vagrant provision --provision-with test-sdk-script,test-sdk-next-script,install-redpesk-sdk
+    else
+        vagrant provision --provision-with test-sdk-script,test-sdk-upstream-script,install-redpesk-sdk
+    fi
     vagrant halt
     if [ "$DESTROY_AFTER" = "y" ]; then
         vagrant destroy -f

@@ -2,18 +2,31 @@
 # shellcheck disable=SC1091
 source /etc/os-release
 
+BRANCH="upstream"
+
+#test arguments
+while [[ $# -gt 0 ]]; do
+    OPTION="$1"
+    case $OPTION in
+    -b | --branch)
+        BRANCH="$2"
+        shift 2;
+    ;;
+    esac
+done
+
 declare -A listepath
 listepath=(
-["/fedora/35/"]="http://silo.redpesk.iot/redpesk/sdk/master/Fedora_35/latest/"
-["/fedora/36/"]="http://silo.redpesk.iot/redpesk/sdk/master/Fedora_36/latest/"
-["/debian/11/"]="http://silo.redpesk.iot/redpesk/sdk/master/Debian_11/latest/"
-["/ubuntu/20.04/"]="http://silo.redpesk.iot/redpesk/sdk/master/Ubuntu_20.04/latest/"
-["/ubuntu/22.04/"]="http://silo.redpesk.iot/redpesk/sdk/master/Ubuntu_22.04/latest/"
-["/opensuse-leap/15.3/"]="http://silo.redpesk.iot/redpesk/sdk/master/openSUSE_Leap_15.3/latest/"
-["/opensuse-leap/15.4/"]="http://silo.redpesk.iot/redpesk/sdk/master/openSUSE_Leap_15.4/latest/"
+["/fedora/35/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/Fedora_35/latest/"
+["/fedora/36/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/Fedora_36/latest/"
+["/debian/11/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/Debian_11/latest/"
+["/ubuntu/20.04/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/Ubuntu_20.04/latest/"
+["/ubuntu/22.04/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/Ubuntu_22.04/latest/"
+["/opensuse-leap/15.3/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/openSUSE_Leap_15.3/latest/"
+["/opensuse-leap/15.4/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/openSUSE_Leap_15.4/latest/"
 )
 
-RESULT_DST="/home/vagrant/ci/${ID}_${VERSION_ID}_xunit.xml"
+RESULT_DST="/home/vagrant/ci/${ID}_${VERSION_ID}_${BRANCH}_xunit.xml"
 mkdir -p "$(dirname "${RESULT_DST}")"
 
 exitval=0
@@ -42,10 +55,18 @@ sdktest () {
         echo "No repo URL fort this distribution"
         return 1
     fi
-    if ./install-redpesk-sdk.sh -r "${REPO_URL}" ; then
-        test "success" "test_native_install" "$line"
-    else 
-        test "error" "test_native_install" "$line"
+    if [ "${BRANCH}" == "upstream" ]; then
+        if ./install-redpesk-sdk.sh ; then
+            test "success" "test_native_install" "$line"
+        else 
+            test "error" "test_native_install" "$line"
+        fi
+    else
+        if ./install-redpesk-sdk.sh -r "${REPO_URL}" ; then
+            test "success" "test_native_install" "$line"
+        else 
+            test "error" "test_native_install" "$line"
+        fi
     fi
     #install helloword-binding and helloword-binding-test
     case ${ID} in
