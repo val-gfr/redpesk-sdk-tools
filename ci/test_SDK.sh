@@ -33,7 +33,7 @@ exitval=0
 
 test() {
     #write the tests result in the xunit.xml file
-    echo "<testcase classname='VMsdk.${ID}.${VERSION_ID}' file='VMsdk.sh' line='$3' name='$2_${ID}.${VERSION_ID}.$1'>" >> "${RESULT_DST}"
+    echo "<testcase classname='VMsdk.${ID}.${VERSION_ID}.${BRANCH}' file='VMsdk.sh' line='$3' name='$2_${ID}.${VERSION_ID}.$1'>" >> "${RESULT_DST}"
     if [ "$1" = "success" ]; then
         echo "</testcase>" >> "${RESULT_DST}"
     elif [ "$1" = "error" ]; then
