@@ -34,10 +34,10 @@ pipeline {
                                         stage("Test SDK ${local_os_path} Next") {
                                             sh """
                                             cd ci
-                                            ./run_SDK_ci.sh --vm-path ${local_os_path} --branch master --destroy
+                                            ./run_SDK_ci.sh --vm-path ${local_os_path} --branch next --destroy
                                         """
                                         }
-                                        stage("Test SDK ${local_os_path} upstream") {
+                                        stage("Test SDK ${local_os_path} Upstream") {
                                             sh """
                                             cd ci
                                             ./run_SDK_ci.sh --vm-path ${local_os_path} --destroy
@@ -46,6 +46,12 @@ pipeline {
                             //    }
                         }
                     }
+
+                    stage("Check result") {
+                        sh """
+                        grep '.error' ci/*xunit.xml && exit 1
+                    """
+                    }
                     //parallel tests_by_os
                 }
             }
@@ -53,10 +59,7 @@ pipeline {
     }
     post {
         always{
-            xunit (
-                thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                tools: [ BoostTest(pattern: 'ci/*xunit.xml') ]
-            )
+            junit 'ci/*xunit.xml'
         }
         failure {
             mail bcc: '',

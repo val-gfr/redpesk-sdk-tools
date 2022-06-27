@@ -101,6 +101,7 @@ sdktest () {
     esac
     #test afm-test command
     (( line=LINENO + 1 ))
+    echo "Start helloworld-binding test"
     if sudo afm-test /var/local/lib/afm/applications/helloworld-binding /var/local/lib/afm/applications/helloworld-binding-test ; then
         test "success" "test_afm-test" "$line"
         #test the afm-test command results
