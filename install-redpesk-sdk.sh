@@ -176,8 +176,8 @@ case $ID in
 	ubuntu)
 		case $VERSION_ID in
 			20.04 | 22.04)
-				#Add redpesk repos
-				sudo apt install -y wget add-apt-key gnupg
+				#Add redpesk repos (ca-certificates is here to fix VM CI test)
+				sudo apt install -y wget add-apt-key gnupg ca-certificates
 				#wget -O - "${REDPESK_REPO}"Release.key | sudo apt-key add - 
 				if [ "${WRITE_CONF}" == "yes" ]; then
 					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > '"${REPO_CONF_FILE}"
