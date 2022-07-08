@@ -17,6 +17,7 @@ pipeline {
                         for uuid in $(VBoxManage list runningvms | awk '{print $2;}' ); do VBoxManage controlvm  ${uuid} poweroff; done
                         for uuid in $(VBoxManage list vms | awk '{print $2;}' ); do VBoxManage unregistervm ${uuid}; done
                         for uuid in $(VBoxManage list vms | grep "<inaccessible>" | awk '{print $2;}' ); do VBoxManage unregistervm ${uuid}; done
+                        rm -fr "/home/vagrant-ci/VirtualBox VMs/"*
                     '''
                 }
             }
