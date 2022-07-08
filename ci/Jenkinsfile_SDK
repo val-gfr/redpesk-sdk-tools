@@ -70,7 +70,7 @@ pipeline {
             mimeType: 'text/html',
             replyTo: '',
             subject: "Jenkins ERROR CI: Project name -> ${env.JOB_NAME}",
-            to: "ronan.lemartret@iot.bzh"
+            to: "${TESTS_SDK}"
         }
     }
 }
