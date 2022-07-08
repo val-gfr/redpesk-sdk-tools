@@ -63,7 +63,7 @@ pipeline {
         }
         failure {
             mail bcc: '',
-            body: "<b>Job Error</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL de build: <a href=${env.BUILD_URL}>${env.BUILD_URL}</a>",
+            body: "<b>Job Error</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL Test Results: <a href=${env.BUILD_URL}>${env.BUILD_URL}/../ <br> Build URL: <a href=${env.BUILD_URL}>${env.BUILD_URL} <br> URL Test Results Analyzer: <a href=${env.BUILD_URL}>${env.BUILD_URL}/../test_results_analyzer</a> ",
             cc: '',
             charset: 'UTF-8',
             from: '',
