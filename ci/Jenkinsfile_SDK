@@ -16,6 +16,7 @@ pipeline {
                     stage("Cleanup SDK xunit files") {
                         sh """
                         rm -f ci/*xunit.xml
+                        rm -f ci/test*.log
                         """
                     }
                     def tests_by_os = [:]
