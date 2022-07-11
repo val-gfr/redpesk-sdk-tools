@@ -3,7 +3,6 @@
 source /etc/os-release
 
 BRANCH="upstream"
-
 #test arguments
 while [[ $# -gt 0 ]]; do
     OPTION="$1"
@@ -27,6 +26,7 @@ listepath=(
 )
 
 RESULT_DST="/home/vagrant/ci/${ID}_${VERSION_ID}_${BRANCH}_xunit.xml"
+LOGFILETEST="/home/vagrant/ci/test_${ID}_${VERSION_ID}_${BRANCH}.log"
 mkdir -p "$(dirname "${RESULT_DST}")"
 
 exitval=0
@@ -102,22 +102,22 @@ sdktest () {
     #test afm-test command
     (( line=LINENO + 1 ))
     echo "Start helloworld-binding test"
-    if sudo afm-test /var/local/lib/afm/applications/helloworld-binding /var/local/lib/afm/applications/helloworld-binding-test ; then
+    if sudo afm-test --logfile "${LOGFILETEST}" /var/local/lib/afm/applications/helloworld-binding /var/local/lib/afm/applications/helloworld-binding-test ; then
         test "success" "test_afm-test" "$line"
         #test the afm-test command results
-        if grep "ERROR:" "test.log"; then
-            error=$(grep "ERROR:" "test.log" | cut -d">" -f2)
+        if grep "ERROR:" "${LOGFILETEST}"; then
+            error=$(grep "ERROR:" "${LOGFILETEST}" | cut -d">" -f2)
             test "error" "test_afm-test-result" "$line" "$error"
         else
-            nofail=$(grep -c "0 failures" "test.log")
-            testskip=$(grep -c "skipped" "test.log")
+            nofail=$(grep -c "0 failures" "${LOGFILETEST}")
+            testskip=$(grep -c "skipped" "${LOGFILETEST}")
             if [ "$nofail" -eq "0" ] || [ "$nofail" -eq "1" ]; then
                 test "failure" "test_afm-test-result" "$line"
             else 
                 test "success" "test_afm-test-result" "$line"
             fi
             if [ "$testskip" -ne "0" ]; then
-                skip=$(grep "skipped" "test.log" | cut -d"," -f4)
+                skip=$(grep "skipped" "${LOGFILETEST}" | cut -d"," -f4)
                 test "skipped" "test_afm-test-result" "$line"
             fi
         fi
