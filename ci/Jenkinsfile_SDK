@@ -51,6 +51,8 @@ pipeline {
                     stage("Check result") {
                         sh """
                         grep '.error' ci/*xunit.xml && exit 1
+                        echo "No error"
+                        exit 0
                     """
                     }
                     //parallel tests_by_os
