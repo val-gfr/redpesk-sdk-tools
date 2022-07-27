@@ -507,8 +507,8 @@ function setup_remote {
         echo "Skipping adding remote as user targeted the 'local' one"
     else
         echo "Adding the LXD image store '${IMAGE_REMOTE}' from: '${IMAGE_STORE}'"
-        ${LXC} remote add ${IMAGE_REMOTE} ${IMAGE_STORE} --password "$IMAGE_STORE_PASSWD" \
-                --accept-certificate
+        ${LXC} remote add ${IMAGE_REMOTE} https://${IMAGE_STORE} --password "$IMAGE_STORE_PASSWD" \
+                --accept-certificate --protocol=simplestreams
     fi
 }
 
