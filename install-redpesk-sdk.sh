@@ -36,6 +36,9 @@ INTERACTIVE="yes";
 LIST_PACKAGE_DEB="afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin afb-client redpesk-cli"
 LIST_PACKAGE_RPM="afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test afb-client redpesk-cli"
 
+# redmine #4550: execute sudo with user environment set (example: http_proxy)
+function sudo { command sudo -E "$@"; }
+
 function help {
     echo -e "Supported distributions : $SUPPORTED_DISTROS\n
 			-c | --rp-cli:\t install rp-cli only\n

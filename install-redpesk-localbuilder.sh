@@ -43,6 +43,9 @@ function usage {
     exit
 }
 
+# redmine #4550: execute sudo with user environment set (example: http_proxy)
+function sudo { command sudo -E "$@"; }
+
 GREEN="\e[92m"
 RED="\e[31m"
 BOLD="\e[1m"
