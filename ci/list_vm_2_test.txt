@@ -1,5 +1,6 @@
 fedora/35/
 fedora/36/
+fedora/37/
 debian/11/
 ubuntu/20.04/
 ubuntu/22.04/
