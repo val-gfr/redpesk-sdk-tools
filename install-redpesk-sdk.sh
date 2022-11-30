@@ -32,6 +32,7 @@ REDPESK_BASE_REPO_DEFAULT="https://download.redpesk.bzh/redpesk-lts/arz-1.0-upda
 
 SPIKPACKINST="no";
 INTERACTIVE="yes";
+INSTALL_RECOMMENDED_PKG="yes";
 
 LIST_PACKAGE_DEB="afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin afb-client redpesk-cli"
 LIST_PACKAGE_RPM="afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test afb-client redpesk-cli"
@@ -41,11 +42,12 @@ function sudo { command sudo -E "$@"; }
 
 function help {
     echo -e "Supported distributions : $SUPPORTED_DISTROS\n
-			-c | --rp-cli:\t install rp-cli only\n
+            -c | --rp-cli:\t install rp-cli only\n
             -r | --repository:\t redpesk sdk repository path\n
-			-h | --help:\t Display help\n
-			-s| --skip-packages-install\n
-			-a| --non-interactive\n"
+            -h | --help:\t Display help\n
+            -s | --skip-packages-install\n
+            -a | --non-interactive\n
+            -n | --no-recommends\n"
     exit
 }
 
@@ -82,6 +84,10 @@ while [[ $# -gt 0 ]]; do
 	;;
     -a|--non-interactive)
         INTERACTIVE="no";
+        shift;
+    ;;
+    -n|--no-recommends)
+        INSTALL_RECOMMENDED_PKG="no";
         shift;
     ;;
 	*)
@@ -186,9 +192,14 @@ case $ID in
 					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > '"${REPO_CONF_FILE}"
 				fi
 				sudo apt-get update  --yes
+				# Manage the "no recommended option" variable
+				no_recommend_opt=""
+				if [ "${INSTALL_RECOMMENDED_PKG}" == "no" ]; then
+					no_recommend_opt="--no-install-recommends"
+				fi
 				#Install base redpesk packages
 				if [ "${SPIKPACKINST}" == "no" ]; then
-					sudo apt install -y ${LIST_PACKAGE_DEB}
+					sudo apt install -y ${no_recommend_opt} ${LIST_PACKAGE_DEB}
 				fi
 				;;
 			*)
@@ -213,9 +224,14 @@ EOF
 				fi
 				sudo zypper --non-interactive --gpg-auto-import-keys ref
 				sudo zypper --non-interactive  dup --from redpesk-sdk
+				# Manage the "no recommended option" variable
+				no_recommend_opt=""
+				if [ "${INSTALL_RECOMMENDED_PKG}" == "no" ]; then
+					no_recommend_opt="--no-recommends"
+				fi
 				#Install base redpesk packages
 				if [ "${SPIKPACKINST}" == "no" ]; then
-					sudo zypper install -y ${LIST_PACKAGE_RPM}
+					sudo zypper install -y ${no_recommend_opt} ${LIST_PACKAGE_RPM}
 				fi
 				;;
 			*)
@@ -239,9 +255,14 @@ gpgcheck=0
 EOF
 				fi
 				sudo dnf clean expire-cache
+				# Manage the "no recommended option" variable
+				no_recommend_opt=""
+				if [ "${INSTALL_RECOMMENDED_PKG}" == "no" ]; then
+					no_recommend_opt="--setopt=install_weak_deps=False"
+				fi
 				#Install base redpesk packages
 				if [ "${SPIKPACKINST}" == "no" ]; then
-					sudo dnf install -y ${LIST_PACKAGE_RPM}
+					sudo dnf install -y ${no_recommend_opt} ${LIST_PACKAGE_RPM}
 				fi
 				;;
 			*)
@@ -257,9 +278,14 @@ EOF
 					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > '"${REPO_CONF_FILE}"
 				fi
 				sudo apt-get update --yes
+				# Manage the "no recommended option" variable
+				no_recommend_opt=""
+				if [ "${INSTALL_RECOMMENDED_PKG}" == "no" ]; then
+					no_recommend_opt="--no-install-recommends"
+				fi
 				#Install base redpesk packages
 				if [ "${SPIKPACKINST}" == "no" ]; then
-					sudo apt-get install -y ${LIST_PACKAGE_DEB}
+					sudo apt-get install -y ${no_recommend_opt} ${LIST_PACKAGE_DEB}
 				fi
 				;;
 			*)
