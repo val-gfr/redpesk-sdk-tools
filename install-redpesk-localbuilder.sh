@@ -584,6 +584,7 @@ function setup_profile {
         ${LXC} profile create "${PROFILE_NAME}"
 		${LXC} profile set "${PROFILE_NAME}" security.privileged true
 		${LXC} profile set "${PROFILE_NAME}" security.nesting true
+		${LXC} profile set "${PROFILE_NAME}" raw.lxc: lxc.apparmor.profile=unconfined
 		${LXC} profile set "${PROFILE_NAME}" security.syscalls.blacklist "keyctl errno 38\nkeyctl_chown errno 38"
 		${LXC} profile device add redpesk loop-control unix-char path=/dev/loop-control
     fi
