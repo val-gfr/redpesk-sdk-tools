@@ -512,7 +512,8 @@ function setup_remote {
     else
         echo "Adding the LXD image store '${IMAGE_REMOTE}' from: '${IMAGE_STORE}'"
         ${LXC} remote add ${IMAGE_REMOTE} https://${IMAGE_STORE} --password "$IMAGE_STORE_PASSWD" \
-                --accept-certificate --protocol=simplestreams
+                --accept-certificate
+                # --accept-certificate --protocol=simplestreams
     fi
 }
 
