@@ -241,7 +241,7 @@ EOF
 		;;
 	fedora)
 		case $VERSION_ID in
-			35 | 36)
+			35 | 36 | 37)
 				#Add redpesk repos
 				sudo dnf install -y dnf-plugins-core
 
