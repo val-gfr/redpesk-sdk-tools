@@ -51,8 +51,8 @@ RED="\e[31m"
 BOLD="\e[1m"
 NORMAL="\e[0m"
 
-IMAGE_REMOTE="iotbzh"
-IMAGE_STORE="download.redpesk.bzh"
+IMAGE_REMOTE="internal"
+IMAGE_STORE="container-images.lorient.iot"
 IMAGE_STORE_PASSWD="iotbzh"
 
 declare -A SUPPORTED_FEDORA
