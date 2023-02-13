@@ -3,7 +3,6 @@
 
 declare -A listevagrant
 listevagrant=(["./debian/11/Vagrantfile"]="generic/debian11"
-["./fedora/35/Vagrantfile"]="generic/fedora35"
 ["./fedora/36/Vagrantfile"]="generic/fedora36"
 ["./fedora/37/Vagrantfile"]="generic/fedora37"
 ["./opensuse-leap/15.3/Vagrantfile"]="opensuse/Leap-15.3.x86_64"

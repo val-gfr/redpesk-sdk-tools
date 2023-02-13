@@ -23,7 +23,7 @@
 shopt -s extglob
 source /etc/os-release
 
-SUPPORTED_DISTROS="Ubuntu 20.04/22.04, OpenSUSE Leap 15.3/15.4, Fedora 35/36/37"
+SUPPORTED_DISTROS="Ubuntu 20.04/22.04, OpenSUSE Leap 15.3/15.4, Fedora 36/37"
 
 #REDPESK_REPO can be given in command line, if so REDPESK_REPO must be the full path for the distro used.
 REDPESK_REPO=""
@@ -156,7 +156,7 @@ if [ -z "${REDPESK_REPO}" ]; then
 			;;
 		fedora)
 			case $VERSION_ID in
-				35 | 36 | 37)
+				36 | 37)
 					#Add redpesk repos
 					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/Fedora_${VERSION_ID}"
 					;;
@@ -241,7 +241,7 @@ EOF
 		;;
 	fedora)
 		case $VERSION_ID in
-			35 | 36 | 37)
+			36 | 37)
 				#Add redpesk repos
 				sudo dnf install -y dnf-plugins-core
 
