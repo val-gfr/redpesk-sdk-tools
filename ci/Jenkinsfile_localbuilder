@@ -13,6 +13,12 @@ pipeline {
         stage('Test SDK') {
             steps {
                 script {
+                    stage("Cleanup localbuilder xunit files") {
+                        sh """
+                        rm -f ci/*xunit.xml
+                        rm -f ci/test*.log
+                        """
+                    }
                     def tests_by_os = [:]
                     def data = readFile(file: 'ci/list_vm_2_test.txt')
                     
@@ -30,13 +36,31 @@ pipeline {
                         }
                     }
                     parallel tests_by_os
+                    stage("Check result") {
+                            sh """
+                            grep '.error' ci/*xunit.xml && exit 1
+                            echo "No error"
+                            exit 0
+                        """
+                    }
                 }
             }
         }
     }
     post {
+        always{
+            junit 'ci/*xunit.xml'
+        }
         failure {
-            mail bcc: '', body: "<b>Example</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL de build: ${env.BUILD_URL}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "ERROR CI: Project name -> ${env.JOB_NAME}", to: "ronan.lemartret@gmail.com";  
+            mail bcc: '',
+            body: "<b>Example</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL de build: ${env.BUILD_URL}",
+            cc: '',
+            charset: 'UTF-8',
+            from: '',
+            mimeType: 'text/html',
+            replyTo: '',
+            subject: "ERROR CI: Project name -> ${env.JOB_NAME}",
+            to: "ronan.lemartret@gmail.com";  
         }
     }
 }

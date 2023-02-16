@@ -135,9 +135,11 @@ run_one_test(){
 
     LOG_FILE="${LOG_DIR}/run_log/${DIST_VER}.log"
     mkdir -p "$(dirname "${LOG_FILE}")"
-    LOG_FILES+=("${LOG_FILE}")
+    #LOG_FILES+=("${LOG_FILE}")
     
     screen -d -m -Logfile "${LOG_FILE}" -L -m vagrant provision "${VAGRANT_OPT_LV1[@]}" --provision-with install-redpesk-localbuilder,test-localbuilder-script
+
+    ./generate_localbuilder_ci_report.py "${LOG_FILE}" --report-path "./${DIST_VER}_$(date +%Y-%m-%d_%H-%M).xunit.xml"
 
     if [ "${VAG_CLEAN}" == "YES" ]; then
         vagrant halt      "${VAGRANT_OPT_LV2[@]}"
@@ -151,4 +153,4 @@ run_one_test(){
 
 run_all_test
 
-./generate_ci_report.py "${LOG_FILES[@]}" --report-path "./report_$(date +%Y-%m-%d_%H-%M).log"
+#./generate_ci_report.py "${LOG_FILES[@]}" --report-path "./report_$(date +%Y-%m-%d_%H-%M).log"

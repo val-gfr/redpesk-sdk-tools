@@ -20,10 +20,11 @@
 import argparse
 
 class ci_report:
-    def __init__(self,path_list):
-        self.__path_list=path_list
+    def __init__(self,path):
+        self.__path=path
         self.__dico_res={}
         self.__report_path=None
+        self.__error=""
 
     def generate(self):
         self.__check_log()
@@ -40,37 +41,30 @@ class ci_report:
                 if "You can log in it with" in line:
                     result=True
                     break
-        return result
-
+        if not result:
+            self.__error="<error></error>"
 
     def __check_log(self):
-        for path in self.__path_list:
-            is_ok=self.__find_error(path)
-            self.__dico_res[path]=is_ok
+        is_ok=self.__find_error(self.__path)
+        self.__dico_res[self.__path]=is_ok
 
     def __generate_log(self):
-        report_log=""
-        global_result="PASSED"
-        size_line=73
-        sep_line="_"*size_line+"\n"
-        report_log+=sep_line
-        for path in self.__dico_res:
-            is_ok=self.__dico_res[path]
-            if not is_ok:
-                global_result="FAILED"
-            report="|\t%s\t|\t%s\t|" % (path, "PASSED" if is_ok else "FAILED")
-            report_log+=report+"\n"
-        report_log+=sep_line
-        report="|\tGlobal result\t\t\t\t\t|\t%s\t|" % (global_result)
-        report_log+=report+"\n"
-        report_log+=sep_line
+        report_log='''<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+<testsuite>
+<testcase classname='%s' file='run_localbuilder_ci.sh' name='test_localbuilder.%s.error'>
+%s
+</testcase>
+</testsuite>
+</testsuites>''' % ("f37","f37", self.__error)
+
         if self.__report_path is not None:
             file = open(self.__report_path,"w+")
             file.write(report_log)
 
 def main():
     parser = argparse.ArgumentParser(description='Process report(s).')
-    parser.add_argument('path', metavar='path', type=str, nargs='+', help='log path')
+    parser.add_argument('path', metavar='path', type=str, help='log path')
     parser.add_argument("-r", "--report-path", metavar='report_path', type=str, help="Generate report file")
     args = parser.parse_args()
     if args.path:
