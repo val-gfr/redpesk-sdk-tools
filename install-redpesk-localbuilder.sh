@@ -22,6 +22,7 @@
 
 set -e
 set -o pipefail
+set -x
 
 function usage {
     printf "Usage: \n\
@@ -446,7 +447,6 @@ networks:
     ipv4.address: auto
     ipv6.address: none
   description: ""
-  managed: false
   name: lxdbr0
   type: ""
 storage_pools:
