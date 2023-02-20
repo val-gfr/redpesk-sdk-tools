@@ -17,14 +17,15 @@
 # limitations under the License.
 ###########################################################################
 
+import os
 import argparse
 
 class ci_report:
-    def __init__(self,path):
+    def __init__(self,path, report_path=None, os_tag=None):
         self.__path=path
-        self.__dico_res={}
-        self.__report_path=None
-        self.__error=""
+        self.__report_path=report_path
+        self.__os_tag=os_tag
+        self.__list_test_case=[]
 
     def generate(self):
         self.__check_log()
@@ -33,30 +34,52 @@ class ci_report:
     def set_report_path(self, report_path):
         self.__report_path=report_path
 
-    def __find_error(self, path):
+    def set_os_tag(self, os_tag):
+        self.__os_tag=os_tag
+
+    def __find_install_error(self, path):
         result=False
+        result_tag="error"
+        install_error=""
+        install_log=""
         with open(path) as f:
             for line in f:
+                install_log+=line
                 #Not the best way to validate a log, it's a first draft, needs improvement.
                 if "You can log in it with" in line:
                     result=True
+                    result_tag="success"
                     break
         if not result:
-            self.__error="<error></error>"
+            install_error="\n<error>%s</error>\n" % (install_log)
+        
+        test_case_install='''
+    \n<testcase classname='%s' file='run_localbuilder_ci.sh' name='localbuilder_installation.%s.%s'>%s</testcase>
+''' % (self.__os_tag, self.__os_tag, result_tag, install_error)
+
+        self.__list_test_case.append(test_case_install)
 
     def __check_log(self):
-        is_ok=self.__find_error(self.__path)
-        self.__dico_res[self.__path]=is_ok
+        if os.path.exists(self.__path):
+            self.__find_install_error(self.__path)
+        else:
+            install_error="\n<error>The log file %s has not been generated</error>\n" % self.__path
+            result_tag="error"
+            test_case_install='''
+        \n<testcase classname='%s' file='run_localbuilder_ci.sh' name='localbuilder_installation.%s.%s'>%s</testcase>
+    ''' % (self.__os_tag, self.__os_tag, result_tag, install_error)
+            self.__list_test_case.append(test_case_install)
 
     def __generate_log(self):
         report_log='''<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-<testsuite>
-<testcase classname='%s' file='run_localbuilder_ci.sh' name='test_localbuilder.%s.error'>
-%s
-</testcase>
-</testsuite>
-</testsuites>''' % ("f37","f37", self.__error)
+<testsuite>'''
+
+        for test_case in self.__list_test_case:
+            report_log+="%s\n" % (test_case)
+
+        report_log+='''</testsuite>
+</testsuites>'''
 
         if self.__report_path is not None:
             file = open(self.__report_path,"w+")
@@ -64,13 +87,16 @@ class ci_report:
 
 def main():
     parser = argparse.ArgumentParser(description='Process report(s).')
-    parser.add_argument('path', metavar='path', type=str, help='log path')
-    parser.add_argument("-r", "--report-path", metavar='report_path', type=str, help="Generate report file")
+    parser.add_argument("-p", "--path"       , metavar='path'       , type=str, help='log path')
+    parser.add_argument("-r", "--install-report-path", metavar='report_path', type=str, help="Generate report file")
+    parser.add_argument("-t", "--os-tag"     , metavar='os_tag'     , type=str, help="OS tag")
     args = parser.parse_args()
     if args.path:
         report=ci_report(args.path)
         if args.report_path:
             report.set_report_path(args.report_path)
+        if args.os_tag:
+            report.set_os_tag(args.os_tag)
         report.generate()
     else:
         exit(1)

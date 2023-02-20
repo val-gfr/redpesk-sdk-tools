@@ -112,7 +112,6 @@ test_tool_bin screen
 cd "${DIR_DIST}" || exit 1
 
 run_all_test(){
-    LOG_FILES=()
     for DIR_DIST in ${LISTPATH}; do
         test_dir "${DIR_DIST}"
         run_one_test "${DIR_DIST}"
@@ -120,7 +119,7 @@ run_all_test(){
 }
 
 run_one_test(){
-    DIST_VER="$(echo ${1}| tr "/" "_")"
+    DIST_VER="$(echo ${1}| tr "/" "_"| tr "." "_")"
     cd "${1}" || exit
 
     if [ "${VAG_CLEAN}" == "YES" ]; then
@@ -130,16 +129,24 @@ run_one_test(){
     if [ "$DESTROY_AFTER" = "YES" ]; then
         vagrant destroy "${VAGRANT_OPT_LV2[@]}"
     fi
-
+    echo "Run vagrant up the machine"
     vagrant up          "${VAGRANT_OPT_LV1[@]}" --no-provision
-
+    echo "Status vagrant up ended with status \"$?\""
     LOG_FILE="${LOG_DIR}/run_log/${DIST_VER}.log"
     mkdir -p "$(dirname "${LOG_FILE}")"
-    #LOG_FILES+=("${LOG_FILE}")
-    
-    screen -d -m -Logfile "${LOG_FILE}" -L -m vagrant provision "${VAGRANT_OPT_LV1[@]}" --provision-with install-redpesk-localbuilder,test-localbuilder-script
-
-    ../../generate_localbuilder_ci_report.py "${LOG_FILE}" --report-path "../../${DIST_VER}$(date +%Y-%m-%d_%H-%M).xunit.xml"
+    echo "Date ( vagrant up): $(date)"
+    echo "Run vagrant provision throw screen"
+    #Note on screen option
+    # -D -m   This also starts screen in detached mode, but doesn't fork a new process.
+    #     The command exits if the session terminates.
+    # -m   causes screen to ignore the $STY environment variable.
+    # -L   tells screen to turn on automatic output logging for the windows
+    screen -D -m -Logfile "${LOG_FILE}" -L -m vagrant provision "${VAGRANT_OPT_LV1[@]}" --provision-with install-redpesk-localbuilder,test-localbuilder-script
+    echo "Status vagrant provision throw screen ended with status \"$?\""
+    echo "Date (vagrant provision): $(date)"
+    echo "Run generate localbuilder ci report"
+    ../../generate_localbuilder_ci_report.py --path "${LOG_FILE}" --install-report-path "../../${DIST_VER}$(date +%Y-%m-%d_%H-%M).xunit.xml" --os-tag "${DIST_VER}"
+    echo "Status generate localbuilder ci report ended with status \"$?\""
 
     if [ "${VAG_CLEAN}" == "YES" ]; then
         vagrant halt      "${VAGRANT_OPT_LV2[@]}"
@@ -152,5 +159,3 @@ run_one_test(){
 }
 
 run_all_test
-
-#./generate_ci_report.py "${LOG_FILES[@]}" --report-path "./report_$(date +%Y-%m-%d_%H-%M).log"

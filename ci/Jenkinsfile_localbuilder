@@ -16,6 +16,7 @@ pipeline {
                     stage("Cleanup localbuilder xunit files") {
                         sh """
                         rm -f ci/*xunit.xml
+                        rm -fr ci/ci_log/
                         rm -f ci/test*.log
                         """
                     }
