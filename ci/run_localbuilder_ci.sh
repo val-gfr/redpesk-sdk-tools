@@ -52,7 +52,7 @@ while [[ $# -gt 0 ]];do
     key="$1"
     case $key in
     -c|--clean)
-        VAG_CLEAN="NO";
+        VAG_CLEAN="YES";
         shift 1;
     ;;
     -s | --destroy)
@@ -120,8 +120,8 @@ run_all_test(){
 }
 
 run_one_test(){
-    DIST_VER="$1"
-    cd "${DIST_VER}" || exit
+    DIST_VER="$(echo ${1}| tr "/" "_")"
+    cd "${1}" || exit
 
     if [ "${VAG_CLEAN}" == "YES" ]; then
         vagrant halt      "${VAGRANT_OPT_LV2[@]}"
@@ -139,7 +139,7 @@ run_one_test(){
     
     screen -d -m -Logfile "${LOG_FILE}" -L -m vagrant provision "${VAGRANT_OPT_LV1[@]}" --provision-with install-redpesk-localbuilder,test-localbuilder-script
 
-    ./generate_localbuilder_ci_report.py "${LOG_FILE}" --report-path "./${DIST_VER}_$(date +%Y-%m-%d_%H-%M).xunit.xml"
+    ../../generate_localbuilder_ci_report.py "${LOG_FILE}" --report-path "../../${DIST_VER}$(date +%Y-%m-%d_%H-%M).xunit.xml"
 
     if [ "${VAG_CLEAN}" == "YES" ]; then
         vagrant halt      "${VAGRANT_OPT_LV2[@]}"
