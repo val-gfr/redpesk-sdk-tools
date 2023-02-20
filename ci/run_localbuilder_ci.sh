@@ -145,7 +145,7 @@ run_one_test(){
     echo "Status vagrant provision throw screen ended with status \"$?\""
     echo "Date (vagrant provision): $(date)"
     echo "Run generate localbuilder ci report"
-    ../../generate_localbuilder_ci_report.py --path "${LOG_FILE}" --install-report-path "../../${DIST_VER}$(date +%Y-%m-%d_%H-%M).xunit.xml" --os-tag "${DIST_VER}"
+    ../../generate_localbuilder_ci_report.py --install-log-path "${LOG_FILE}" --report-path "../../${DIST_VER}$(date +%Y-%m-%d_%H-%M).xunit.xml" --os-tag "${DIST_VER}"
     echo "Status generate localbuilder ci report ended with status \"$?\""
 
     if [ "${VAG_CLEAN}" == "YES" ]; then

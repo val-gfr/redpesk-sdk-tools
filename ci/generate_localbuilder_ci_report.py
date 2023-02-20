@@ -87,12 +87,12 @@ class ci_report:
 
 def main():
     parser = argparse.ArgumentParser(description='Process report(s).')
-    parser.add_argument("-p", "--path"       , metavar='path'       , type=str, help='log path')
-    parser.add_argument("-r", "--install-report-path", metavar='report_path', type=str, help="Generate report file")
+    parser.add_argument("-p", "--install-log-path"       , metavar='install_log_path'       , type=str, help='log path')
+    parser.add_argument("-r", "--report-path", metavar='report_path', type=str, help="Generate report file")
     parser.add_argument("-t", "--os-tag"     , metavar='os_tag'     , type=str, help="OS tag")
     args = parser.parse_args()
-    if args.path:
-        report=ci_report(args.path)
+    if args.install_log_path:
+        report=ci_report(args.install_log_path)
         if args.report_path:
             report.set_report_path(args.report_path)
         if args.os_tag:
