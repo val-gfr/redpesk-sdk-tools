@@ -37,14 +37,22 @@ class ci_report:
     def set_os_tag(self, os_tag):
         self.__os_tag=os_tag
 
+    def __filter_string_4_xml(self, line):
+        line=line.replace('"','&quot')
+        line=line.replace("'",'&apos')
+        line=line.replace('<','&lt')
+        line=line.replace('>','&gt')
+        line=line.replace('&','&amp')
+        return line
+
     def __find_install_error(self, path):
-        result=False
+        result=False'
         result_tag="error"
         install_error=""
         install_log=""
         with open(path) as f:
             for line in f:
-                install_log+=line
+                install_log+=self.__filter_string_4_xml(line)
                 #Not the best way to validate a log, it's a first draft, needs improvement.
                 if "You can log in it with" in line:
                     result=True
