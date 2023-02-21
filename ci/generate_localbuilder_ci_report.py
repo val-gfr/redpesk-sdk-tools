@@ -19,6 +19,7 @@
 
 import os
 import argparse
+import re
 
 class ci_report:
     def __init__(self,path, report_path=None, os_tag=None):
@@ -38,19 +39,20 @@ class ci_report:
         self.__os_tag=os_tag
 
     def __filter_string_4_xml(self, line):
-        line=line.replace('"','&quot')
-        line=line.replace("'",'&apos')
-        line=line.replace('<','&lt')
-        line=line.replace('>','&gt')
-        line=line.replace('&','&amp')
-        return line
+        #line=line.replace('"','&quot;')
+        #line=line.replace("'",'&apos;')
+        line=line.replace('<','&lt;')
+        line=line.replace('>','&gt;')
+        #line=line.replace('&','&amp;')
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        return ansi_escape.sub('', line)
 
     def __find_install_error(self, path):
         result=False
         result_tag="error"
         install_error=""
         install_log=""
-        with open(path) as f:
+        with open(path)  as f:
             for line in f:
                 install_log+=self.__filter_string_4_xml(line)
                 #Not the best way to validate a log, it's a first draft, needs improvement.

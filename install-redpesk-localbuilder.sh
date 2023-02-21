@@ -470,6 +470,8 @@ profiles:
   name: default
 cluster: null
 EOF
+
+
 }
 
 function restart_lxd {
@@ -623,6 +625,20 @@ function setup_init_lxd {
         echo "1st configuration of lxd ..."
         lxd_init
     fi
+
+    case ${ID} in
+    fedora|opensuse-leap)
+        zone=$(sudo firewall-cmd --get-zone-of-interface=lxdbr0)||zone=none
+
+        if [ "${zone}" != "trusted" ]; then
+            sudo firewall-cmd --zone=trusted --change-interface=lxdbr0 --permanent
+            sudo firewall-cmd --reload
+        fi
+        ;;
+    *)
+        ;;
+    esac
+
 }
 
 function setup_ssh {
@@ -772,7 +788,7 @@ function setup_container_ip {
 
         if [ "$MY_IP_ADD_RES_TYPE" != "inet" ] ; then
             echo 'waiting for IPv4 address'
-            sleep 1
+            sleep 2
             continue
         fi
 
@@ -810,6 +826,11 @@ function setup_hosts {
     echo "${MY_IP_ADD_RESS} ${CONTAINER_NAME}" | sudo tee -a /etc/hosts
 }
 
+function lxc_luanch_failed {
+    echo "ERROR ${LXC} launch failed"
+    exit 1
+}
+
 function setup_lxc_container {
     echo "This will install the ${CONTAINER_NAME} container on your machine"
 
@@ -835,8 +856,8 @@ function setup_lxc_container {
 
     IMAGE_SPEC="${IMAGE_REMOTE}:${CONTAINER_FLAVOURS[$CONTAINER_TYPE]}"
     echo "Pulling in container image from $IMAGE_SPEC ..."
-    ${LXC} launch "${IMAGE_SPEC}" "${CONTAINER_NAME}" --profile default --profile "${PROFILE_NAME}" --storage "${STORAGE_POOL_NAME}" < /dev/null
-
+    ${LXC} launch "${IMAGE_SPEC}" "${CONTAINER_NAME}" --profile default --profile "${PROFILE_NAME}" --storage "${STORAGE_POOL_NAME}"  --debug --verbose < /dev/null || lxc_luanch_failed
+    echo "Pulling done, setup container ..."
     setup_container_ip
 
     echo "Container ${CONTAINER_NAME} operational. Remaining few last steps ..."
@@ -855,6 +876,7 @@ function setup_lxc_container {
 
     setup_hosts
 
+    sync
     echo -e "Container ${BOLD}${CONTAINER_NAME}${NORMAL} (${MY_IP_ADD_RESS}) successfully created !"
     #"You can log in it with" is a key sentance use in CI do not change it.
     echo -e "You can log in it with '${BOLD}ssh ${CONTAINER_USER}@${CONTAINER_NAME}${NORMAL}'"
