@@ -584,7 +584,9 @@ function setup_profile {
         ${LXC} profile create "${PROFILE_NAME}"
 		${LXC} profile set "${PROFILE_NAME}" security.privileged true
 		${LXC} profile set "${PROFILE_NAME}" security.nesting true
-		${LXC} profile set "${PROFILE_NAME}" raw.lxc lxc.apparmor.profile=unconfined
+        if [ "${ID}" == "opensuse-leap" ]; then
+            ${LXC} profile set "${PROFILE_NAME}" raw.lxc lxc.apparmor.profile=unconfined
+        fi
 		${LXC} profile set "${PROFILE_NAME}" security.syscalls.blacklist "keyctl errno 38\nkeyctl_chown errno 38"
 		${LXC} profile device add redpesk loop-control unix-char path=/dev/loop-control
     fi
@@ -854,6 +856,7 @@ function setup_lxc_container {
     setup_hosts
 
     echo -e "Container ${BOLD}${CONTAINER_NAME}${NORMAL} (${MY_IP_ADD_RESS}) successfully created !"
+    #"You can log in it with" is a key sentance use in CI do not change it.
     echo -e "You can log in it with '${BOLD}ssh ${CONTAINER_USER}@${CONTAINER_NAME}${NORMAL}'"
 }
 
