@@ -46,7 +46,7 @@ class ci_report:
         return line
 
     def __find_install_error(self, path):
-        result=False'
+        result=False
         result_tag="error"
         install_error=""
         install_log=""
@@ -62,8 +62,8 @@ class ci_report:
             install_error="\n<error>%s</error>\n" % (install_log)
         
         test_case_install='''
-    \n<testcase classname='%s' file='run_localbuilder_ci.sh' name='localbuilder_installation.%s.%s'>%s</testcase>
-''' % (self.__os_tag, self.__os_tag, result_tag, install_error)
+    \n<testcase classname='%s' file='run_localbuilder_ci.sh' name='localbuilder_installation.%s'>%s</testcase>
+''' % (self.__os_tag, self.__os_tag, install_error)
 
         self.__list_test_case.append(test_case_install)
 
