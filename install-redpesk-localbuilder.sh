@@ -628,11 +628,15 @@ function setup_init_lxd {
 
     case ${ID} in
     fedora|opensuse-leap)
-        zone=$(sudo firewall-cmd --get-zone-of-interface=lxdbr0)||zone=none
+        
+        FIRECMD="$(which firewall-cmd)" || echo "No firewall-cmd on this host"
+        if [ -n "${FIRECMD}" ];then
+            zone=$(sudo firewall-cmd --get-zone-of-interface=lxdbr0)||zone=none
 
-        if [ "${zone}" != "trusted" ]; then
-            sudo firewall-cmd --zone=trusted --change-interface=lxdbr0 --permanent
-            sudo firewall-cmd --reload
+            if [ "${zone}" != "trusted" ]; then
+                sudo firewall-cmd --zone=trusted --change-interface=lxdbr0 --permanent
+                sudo firewall-cmd --reload
+            fi
         fi
         ;;
     *)
