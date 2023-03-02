@@ -70,12 +70,11 @@ run_all_test(){
 run_one_test(){
     cd "$1" || exit
     vagrant up --no-provision
-    if [ "${BRANCH}" == "master" ]; then
-        vagrant provision --provision-with test-sdk-script,test-sdk-master-script,install-redpesk-sdk
-    elif [ "${BRANCH}" == "next" ]; then
-        vagrant provision --provision-with test-sdk-script,test-sdk-next-script,install-redpesk-sdk
+    if [ -n "${BRANCH}" ]; then
+        echo "BRANCH=${BRANCH}" > ../../test_SDK_var.sh
+        vagrant provision --provision-with test-sdk-script,test-sdk-VAR-script,install-redpesk-sdk
     else
-        vagrant provision --provision-with test-sdk-script,test-sdk-upstream-script,install-redpesk-sdk
+        vagrant provision --provision-with test-sdk-script,install-redpesk-sdk
     fi
     vagrant halt
     if [ "$DESTROY_AFTER" = "y" ]; then

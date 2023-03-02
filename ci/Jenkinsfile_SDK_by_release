@@ -5,18 +5,17 @@ pipeline {
         }
     }
 
-    triggers {
-        cron('H 2 * * *')
+    parameters {
+        string(name: 'BRANCH', defaultValue: '', description: 'Choose your SDK test Branch')
     }
 
     stages {
         stage('Test SDK') {
             steps {
                 script {
-                    stage("Cleanup localbuilder xunit files") {
+                    stage("Cleanup SDK xunit files") {
                         sh """
                         rm -f ci/*xunit.xml
-                        rm -fr ci/ci_log/
                         rm -f ci/test*.log
                         """
                     }
@@ -27,23 +26,24 @@ pipeline {
                         for (String os_path : os_paths.split(" ")) {
                             def local_os_path = os_path
                             //tests_by_os["Test SDK ${os_path}"] = {
-                                        stage("Test SDK ${local_os_path}") {
+                                        stage("Test SDK ${local_os_path} ${params.BRANCH}") {
                                             sh """
                                             cd ci
-                                            ./run_localbuilder_ci.sh --clean --vm-path ${local_os_path} --job_name ${env.JOB_NAME} --destroy
+                                            ./run_SDK_ci.sh --vm-path ${local_os_path} --branch ${params.BRANCH} --destroy
                                         """
                                         }
                             //    }
                         }
                     }
-                    //parallel tests_by_os
+
                     stage("Check result") {
-                            sh """
-                            grep '.error' ci/*xunit.xml && exit 1
-                            echo "No error"
-                            exit 0
-                        """
+                        sh """
+                        grep '.error' ci/*xunit.xml && exit 1
+                        echo "No error"
+                        exit 0
+                    """
                     }
+                    //parallel tests_by_os
                 }
             }
         }
@@ -54,14 +54,14 @@ pipeline {
         }
         failure {
             mail bcc: '',
-            body: "<b>Example</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL de build: ${env.BUILD_URL}",
+            body: "<b>Job Error</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL Test Results: <a href=${env.BUILD_URL}>${env.BUILD_URL}/../ <br> Build URL: <a href=${env.BUILD_URL}>${env.BUILD_URL} <br> URL Test Results Analyzer: <a href=${env.BUILD_URL}>${env.BUILD_URL}/../test_results_analyzer</a> ",
             cc: '',
             charset: 'UTF-8',
             from: '',
             mimeType: 'text/html',
             replyTo: '',
-            subject: "ERROR CI: Project name -> ${env.JOB_NAME}",
-            to: "ronan.lemartret@gmail.com";  
+            subject: "Jenkins ERROR CI: Project name -> ${env.JOB_NAME}",
+            to: "${TESTS_SDK}"
         }
     }
 }

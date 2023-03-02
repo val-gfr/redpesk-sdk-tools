@@ -16,13 +16,13 @@ done
 
 declare -A listepath
 listepath=(
-["/fedora/36/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/Fedora_36/latest/"
-["/fedora/37/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/Fedora_37/latest/"
-["/debian/11/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/Debian_11/latest/"
-["/ubuntu/20.04/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/Ubuntu_20.04/latest/"
-["/ubuntu/22.04/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/Ubuntu_22.04/latest/"
-["/opensuse-leap/15.3/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/openSUSE_Leap_15.3/latest/"
-["/opensuse-leap/15.4/"]="http://silo.redpesk.iot/redpesk/sdk/${BRANCH}/openSUSE_Leap_15.4/latest/"
+["/fedora/36/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/Fedora_36/latest/"
+["/fedora/37/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/Fedora_37/latest/"
+["/debian/11/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/Debian_11/latest/"
+["/ubuntu/20.04/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/Ubuntu_20.04/latest/"
+["/ubuntu/22.04/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/Ubuntu_22.04/latest/"
+["/opensuse-leap/15.3/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/openSUSE_Leap_15.3/latest/"
+["/opensuse-leap/15.4/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/openSUSE_Leap_15.4/latest/"
 )
 
 RESULT_DST="/home/vagrant/ci/${ID}_${VERSION_ID}_${BRANCH}_xunit.xml"
