@@ -1,9 +1,5 @@
 pipeline {
-    agent {
-        node {
-            label "vagrant-ci"
-        }
-    }
+    agent any
 
     triggers {
         cron('H 4 * * *')
