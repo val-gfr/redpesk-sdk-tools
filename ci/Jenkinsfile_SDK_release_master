@@ -26,10 +26,10 @@ pipeline {
                         for (String os_path : os_paths.split(" ")) {
                             def local_os_path = os_path
                             //tests_by_os["Test SDK ${os_path}"] = {
-                                        stage("Test SDK ${local_os_path} ${params.BRANCH}") {
+                                        stage("Test SDK ${local_os_path} master") {
                                             sh """
                                             cd ci
-                                            ./run_SDK_ci.sh --vm-path ${local_os_path} --branch ${params.BRANCH} --destroy
+                                            ./run_SDK_ci.sh --vm-path ${local_os_path} --branch master --destroy
                                         """
                                         }
                             //    }

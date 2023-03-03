@@ -13,22 +13,18 @@ pipeline {
         stage('Test SDK') {
             steps {
                 script {
-                    build( job: "JF-redpesk-sdk-tools-SDK-CI-by-release", parameters: [
-                        string(name: 'BRANCH', value: "Master")
-                        ],
-                    )
-                    build( job: "JF-redpesk-sdk-tools-SDK-CI-by-release", parameters: [
-                        string(name: 'BRANCH', value: "Next")
-                        ],
-                    )
-                    build( job: "JF-redpesk-sdk-tools-SDK-CI-by-release", parameters: [
-                        string(name: 'BRANCH', value: "1.1")
-                        ],
-                    )
-                    build( job: "JF-redpesk-sdk-tools-SDK-CI-by-release", parameters: [
-                        string(name: 'BRANCH', value: "")
-                        ],
-                    )
+                    stage("Test SDK master") {
+                        build( job: "JF-redpesk-sdk-tools-SDK-CI-release-master")
+                    }
+                    stage("Test SDK next") {
+                        build( job: "JF-redpesk-sdk-tools-SDK-CI-release-next")
+                    }
+                    stage("Test SDK 1.1") {
+                        build( job: "JF-redpesk-sdk-tools-SDK-CI-release-1.1")
+                    }
+                    stage("Test SDK upstream") {
+                        build( job: "JF-redpesk-sdk-tools-SDK-CI-release-upstream")
+                    }
                 }
             }
         }
