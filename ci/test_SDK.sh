@@ -2,6 +2,8 @@
 # shellcheck disable=SC1091
 source /etc/os-release
 
+set -x
+
 BRANCH="upstream"
 #test arguments
 while [[ $# -gt 0 ]]; do
