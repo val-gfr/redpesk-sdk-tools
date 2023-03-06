@@ -1,1 +1,1 @@
-BRANCH="master"
+BRANCH=master
