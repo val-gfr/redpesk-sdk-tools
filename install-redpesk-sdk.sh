@@ -126,8 +126,8 @@ if [ -z "${REDPESK_OS_VERSION}" ]; then
 	REDPESK_OS_VERSION="${REDPESK_OS_VERSION_DEFAULT}"
 fi
 
-REDPESK_BASE_REPO_DEFAULT="	https://download.redpesk.bzh/redpesk-lts/${REDPESK_OS_VERSION}/sdk/ \
-							https://download.redpesk.bzh/redpesk-lts/${REDPESK_OS_VERSION}/sdk-third-party	"
+REDPESK_BASE_REPO_DEFAULT="	https://download.redpesk.bzh/redpesk-lts/${REDPESK_OS_VERSION}/sdk-arz/ \
+							https://download.redpesk.bzh/redpesk-lts/${REDPESK_OS_VERSION}/sdk-arz-third-party	"
 
 REDPESK_CI_BASE_REPO_DEFAULT="	https://download.redpesk.bzh/redpesk-ci/armel-update/tools/	\
 								https://download.redpesk.bzh/redpesk-ci/armel-update/tools-third-party/	"
