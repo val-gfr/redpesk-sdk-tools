@@ -26,16 +26,20 @@ source /etc/os-release
 SUPPORTED_DISTROS="Ubuntu 20.04/22.04, OpenSUSE Leap 15.3/15.4, Fedora 36/37"
 
 #REDPESK_REPO can be given in command line, if so REDPESK_REPO must be the full path for the distro used.
-REDPESK_REPO=""
 
-REDPESK_BASE_REPO_DEFAULT="https://download.redpesk.bzh/redpesk-lts/arz-1.0-update/sdk/"
+REDPESK_OS_VERSION_DEFAULT="arz-1.1-update"
+
+REDPESK_OS_VERSION=""
+
+REDPESK_REPO=""
+REDPESK_CI_REPO=""
 
 SPIKPACKINST="no";
 INTERACTIVE="yes";
 INSTALL_RECOMMENDED_PKG="yes";
 
-LIST_PACKAGE_DEB="afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin afb-client redpesk-cli"
-LIST_PACKAGE_RPM="afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test afb-client redpesk-cli"
+LIST_PACKAGE_DEB="afb-binder afb-binding-dev afb-libhelpers-dev afb-cmake-modules afb-libcontroller-dev afb-ui-devtools afb-test-bin afb-client"
+LIST_PACKAGE_RPM="afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-modules afb-libcontroller-devel afb-ui-devtools afb-test afb-client"
 
 # redmine #4550: execute sudo with user environment set (example: http_proxy)
 function sudo { command sudo -E "$@"; }
@@ -44,6 +48,8 @@ function help {
     echo -e "Supported distributions : $SUPPORTED_DISTROS\n
             -c | --rp-cli:\t install rp-cli only\n
             -r | --repository:\t redpesk sdk repository path\n
+            -o | --osversion:\t set the redpesk version value, default:${REDPESK_OS_VERSION_DEFAULT}\n
+            -i | --cirepository:\t redpesk ci repository path\n
             -h | --help:\t Display help\n
             -s | --skip-packages-install\n
             -a | --non-interactive\n
@@ -66,9 +72,27 @@ while [[ $# -gt 0 ]]; do
 		LIST_PACKAGE_RPM="redpesk-cli"
 		shift;
 	;;
+	-i|--cirepository)
+		if [[ -n $2 ]]; then
+			REDPESK_CI_REPO="$REDPESK_CI_REPO $2";
+			shift 2;
+		else
+			printf "command error: a repository was expected\n-r <repository>\n"
+			exit;
+		fi
+	;;
 	-r|--repository)
 		if [[ -n $2 ]]; then
-			REDPESK_REPO="$2";
+			REDPESK_REPO="$REDPESK_REPO $2";
+			shift 2;
+		else
+			printf "command error: a repository was expected\n-r <repository>\n"
+			exit;
+		fi
+	;;
+	-o|--osversion)
+		if [[ -n $2 ]]; then
+			REDPESK_OS_VERSION="$2";
 			shift 2;
 		else
 			printf "command error: a repository was expected\n-r <repository>\n"
@@ -98,20 +122,38 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+if [ -z "${REDPESK_OS_VERSION}" ]; then
+	REDPESK_OS_VERSION="${REDPESK_OS_VERSION_DEFAULT}"
+fi
+
+REDPESK_BASE_REPO_DEFAULT="	https://download.redpesk.bzh/redpesk-lts/${REDPESK_OS_VERSION}/sdk/ \
+							https://download.redpesk.bzh/redpesk-lts/${REDPESK_OS_VERSION}/sdk-third-party	"
+
+REDPESK_CI_BASE_REPO_DEFAULT="	https://download.redpesk.bzh/redpesk-ci/armel-update/tools/	\
+								https://download.redpesk.bzh/redpesk-ci/armel-update/tools-third-party/	"
+
+
 REPO_CONF_FILE_NAME="redpesk-sdk"
+REPO_CI_CONF_FILE_NAME="redpesk-ci"
 REPO_CONF_FILE=""
+CI_REPO_CONF_FILE=""
+
 case $ID in
 	ubuntu)
 		REPO_CONF_FILE="/etc/apt/sources.list.d/${REPO_CONF_FILE_NAME}.list"
+		CI_REPO_CONF_FILE="/etc/apt/sources.list.d/${REPO_CI_CONF_FILE_NAME}.list"
 		;;
 	opensuse-leap)
 		REPO_CONF_FILE="/etc/zypp/repos.d/${REPO_CONF_FILE_NAME}.repo"
+		CI_REPO_CONF_FILE="/etc/zypp/repos.d/${REPO_CI_CONF_FILE_NAME}.repo"
 		;;
 	fedora)
 		REPO_CONF_FILE="/etc/yum.repos.d/${REPO_CONF_FILE_NAME}.repo"
+		CI_REPO_CONF_FILE="/etc/yum.repos.d/${REPO_CI_CONF_FILE_NAME}.repo"
 		;;
 	debian)
 		REPO_CONF_FILE="/etc/apt/sources.list.d/${REPO_CONF_FILE_NAME}.list"
+		CI_REPO_CONF_FILE="/etc/apt/sources.list.d/${REPO_CI_CONF_FILE_NAME}.list"
 		;;
 	*)
 		error_message
@@ -119,6 +161,7 @@ case $ID in
 esac
 
 WRITE_CONF="yes"
+CI_WRITE_CONF="yes"
 
 if [ -f "${REPO_CONF_FILE}" ]; then
 	if [ "${INTERACTIVE}" == "yes" ]; then
@@ -132,12 +175,24 @@ if [ -f "${REPO_CONF_FILE}" ]; then
 	fi
 fi
 
-if [ -z "${REDPESK_REPO}" ]; then
+if [ -f "${CI_REPO_CONF_FILE}" ]; then
+	if [ "${INTERACTIVE}" == "yes" ]; then
+		read -r -p "The conf file ${CI_REPO_CONF_FILE} already exists and will be destroyed, keep it? [N/y]" choice
+	fi
+	if [ -z "${choice}" ]; then
+		choice="n"
+	fi
+	if [ "x$choice" != "xn" ] && [ "x$choice" != "xN" ]; then
+		CI_WRITE_CONF="no"
+	fi
+fi
+
+function get_obs_distro_name {
 	case $ID in
 		ubuntu)
 			case $VERSION_ID in
 				20.04 | 22.04)
-					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/Ubuntu_${VERSION_ID}"
+					echo "xUbuntu_${VERSION_ID}"
 					;;
 				*)
 					error_message
@@ -147,7 +202,7 @@ if [ -z "${REDPESK_REPO}" ]; then
 		opensuse-leap)
 			case $VERSION_ID in
 				15.3 | 15.4)
-					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/openSUSE_Leap_${VERSION_ID}"
+					echo "openSUSE_Leap_${VERSION_ID}"
 					;;
 				*)
 					error_message
@@ -157,8 +212,7 @@ if [ -z "${REDPESK_REPO}" ]; then
 		fedora)
 			case $VERSION_ID in
 				36 | 37)
-					#Add redpesk repos
-					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/Fedora_${VERSION_ID}"
+					echo "Fedora_${VERSION_ID}"
 					;;
 				*)
 					error_message
@@ -168,7 +222,7 @@ if [ -z "${REDPESK_REPO}" ]; then
 		debian)
 			case $VERSION_ID in
 				11)
-					REDPESK_REPO="${REDPESK_BASE_REPO_DEFAULT}/Debian_${VERSION_ID}"
+					echo "Debian_${VERSION_ID}"
 					;;
 				*)
 					error_message
@@ -179,6 +233,20 @@ if [ -z "${REDPESK_REPO}" ]; then
 			error_message
 			;;
 	esac
+}
+
+obs_distro_name=$(get_obs_distro_name)
+
+if [ -z "${REDPESK_REPO}" ]; then
+	for repo in ${REDPESK_BASE_REPO_DEFAULT}; do
+		REDPESK_REPO="${REDPESK_REPO} ${repo}/${obs_distro_name}"
+	done
+fi
+
+if [ -z "${REDPESK_CI_REPO}" ]; then
+	for repo in ${REDPESK_CI_BASE_REPO_DEFAULT}; do
+		REDPESK_CI_REPO="${REDPESK_CI_REPO} ${repo}/${obs_distro_name}"
+	done
 fi
 
 case $ID in
@@ -186,11 +254,30 @@ case $ID in
 		case $VERSION_ID in
 			20.04 | 22.04)
 				#Add redpesk repos (ca-certificates is here to fix VM CI test)
-				sudo apt install -y wget add-apt-key gnupg ca-certificates
-				#wget -O - "${REDPESK_REPO}"Release.key | sudo apt-key add - 
+				sudo apt-get update --yes
+				sudo apt-get install -y curl wget add-apt-key gnupg ca-certificates
+				ID_REPO=1
 				if [ "${WRITE_CONF}" == "yes" ]; then
-					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > '"${REPO_CONF_FILE}"
+					sudo rm -fr "${REPO_CONF_FILE}"
+					for repo in ${REDPESK_REPO}; do
+						#This should be fixed
+						wget -O - "${repo}"Release.key | sudo apt-key add -
+						#sudo rm -f  "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
+						#curl "${repo}/Release.key" | sudo gpg --no-tty --dearmor --output "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
+						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" >> '"${REPO_CONF_FILE}"
+						ID_REPO=$(( $ID_REPO + 1))
+					done
 				fi
+				ID_REPO=1
+				if [ "${CI_WRITE_CONF}" == "yes" ]; then
+					sudo rm -fr "${CI_REPO_CONF_FILE}"
+					for repo in ${REDPESK_CI_REPO}; do
+						curl "${repo}/Release.key" | sudo gpg --no-tty --dearmor --output "/etc/apt/trusted.gpg.d/redpesk-ci-${ID_REPO}.gpg"
+						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" >> '"${CI_REPO_CONF_FILE}"
+						ID_REPO=$(( $ID_REPO + 1))
+					done
+				fi
+				
 				sudo apt-get update  --yes
 				# Manage the "no recommended option" variable
 				no_recommend_opt=""
@@ -199,7 +286,7 @@ case $ID in
 				fi
 				#Install base redpesk packages
 				if [ "${SPIKPACKINST}" == "no" ]; then
-					sudo apt install -y ${no_recommend_opt} ${LIST_PACKAGE_DEB}
+					sudo apt-get install -y ${no_recommend_opt} ${LIST_PACKAGE_DEB}
 				fi
 				;;
 			*)
@@ -210,25 +297,38 @@ case $ID in
 	opensuse-leap)
 		case $VERSION_ID in
 			15.3 | 15.4)
-				#Add redpesk repos
-				sudo zypper ar -f "${REDPESK_REPO}" redpesk-sdk
-
-				if [ "${WRITE_CONF}" == "yes" ]; then
-				sudo tee "${REPO_CONF_FILE}" >/dev/null <<EOF
-[redpesk-sdk]
-name=redpesk-sdk
-baseurl=${REDPESK_REPO}
-enabled=1
-gpgcheck=0
-EOF
-				fi
-				sudo zypper --non-interactive --gpg-auto-import-keys ref
-				sudo zypper --non-interactive  dup --from redpesk-sdk
 				# Manage the "no recommended option" variable
 				no_recommend_opt=""
 				if [ "${INSTALL_RECOMMENDED_PKG}" == "no" ]; then
 					no_recommend_opt="--no-recommends"
 				fi
+
+				ID_REPO=1
+
+				#Add redpesk repos
+
+				if [ "${WRITE_CONF}" == "yes" ]; then
+					for repo in ${REDPESK_REPO}; do
+						sudo zypper rr "redpesk-sdk-${ID_REPO}"
+						sudo zypper ar -f "${repo}" "redpesk-sdk-${ID_REPO}"
+						sudo zypper --non-interactive --gpg-auto-import-keys ref
+						sudo zypper --non-interactive  dup --from "redpesk-sdk-${ID_REPO}"
+						ID_REPO=$(( $ID_REPO + 1))
+					done
+				fi
+				
+				ID_REPO=1
+
+				if [ "${CI_WRITE_CONF}" == "yes" ]; then
+					for repo in ${REDPESK_CI_REPO}; do
+						sudo zypper rr "redpesk-ci-${ID_REPO}"
+						sudo zypper ar -f "${repo}" "redpesk-ci-${ID_REPO}"
+						sudo zypper --non-interactive --gpg-auto-import-keys ref
+						sudo zypper --non-interactive  dup --from "redpesk-ci-${ID_REPO}"
+						ID_REPO=$(( $ID_REPO + 1))
+					done
+				fi
+
 				#Install base redpesk packages
 				if [ "${SPIKPACKINST}" == "no" ]; then
 					sudo zypper install -y ${no_recommend_opt} ${LIST_PACKAGE_RPM}
@@ -246,13 +346,38 @@ EOF
 				sudo dnf install -y dnf-plugins-core
 
 				if [ "${WRITE_CONF}" == "yes" ]; then
-					sudo tee "${REPO_CONF_FILE}" >/dev/null <<EOF
-[redpesk-sdk]
-name=redpesk-sdk
-baseurl=${REDPESK_REPO}
+
+					sudo rm -fr "${REPO_CONF_FILE} ${CI_REPO_CONF_FILE}"
+
+					ID_REPO=1
+
+					for repo in ${REDPESK_REPO}; do
+						sudo tee --append "${REPO_CONF_FILE}" > /dev/null <<EOF
+[redpesk-sdk-$ID_REPO]
+name=redpesk-sdk-$ID_REPO
+baseurl=${repo}
 enabled=1
-gpgcheck=0
+gpgcheck=1
+gpgkey=${repo}/repodata/repomd.xml.key
+
 EOF
+						ID_REPO=$(( $ID_REPO + 1))
+					done
+
+					ID_REPO=1
+
+					for repo in ${REDPESK_CI_REPO}; do
+						sudo tee --append "${CI_REPO_CONF_FILE}" > /dev/null <<EOF
+[redpesk-ci-$ID_REPO]
+name=redpesk-ci-$ID_REPO
+baseurl=${repo}
+enabled=1
+gpgcheck=1
+gpgkey=${repo}/repodata/repomd.xml.key
+EOF
+						ID_REPO=$(( $ID_REPO + 1))
+					done
+
 				fi
 				sudo dnf clean expire-cache
 				# Manage the "no recommended option" variable
@@ -273,10 +398,32 @@ EOF
 	debian)
 		case $VERSION_ID in
 			11)
-				#Add redpesk repos 
+				#Add redpesk repos (ca-certificates is here to fix VM CI test)
+				sudo apt-get update --yes
+				sudo apt-get install -y curl wget add-apt-key gnupg ca-certificates
+				ID_REPO=1
 				if [ "${WRITE_CONF}" == "yes" ]; then
-					sudo sh -c 'echo "deb [trusted=yes] '"${REDPESK_REPO}"' ./" > '"${REPO_CONF_FILE}"
+					sudo rm -fr "${REPO_CONF_FILE}"
+					for repo in ${REDPESK_REPO}; do
+						#This should be fixed
+						wget -O - "${repo}"Release.key | sudo apt-key add -
+						#sudo rm -f  "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
+						#curl  "${repo}/Release.key" | sudo gpg --no-tty --dearmor --output "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
+						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" > '"${REPO_CONF_FILE}"
+						ID_REPO=$(( $ID_REPO + 1))
+					done
 				fi
+				ID_REPO=1
+				if [ "${CI_WRITE_CONF}" == "yes" ]; then
+					sudo rm -fr "${CI_REPO_CONF_FILE}"
+					for repo in ${REDPESK_CI_REPO}; do
+						sudo rm -f  "/etc/apt/trusted.gpg.d/redpesk-ci-${ID_REPO}.gpg"
+						curl "${repo}/Release.key" | sudo gpg --no-tty --dearmor --output "/etc/apt/trusted.gpg.d/redpesk-ci-${ID_REPO}.gpg"
+						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" > '"${CI_REPO_CONF_FILE}"
+						ID_REPO=$(( $ID_REPO + 1))
+					done
+				fi
+				
 				sudo apt-get update --yes
 				# Manage the "no recommended option" variable
 				no_recommend_opt=""

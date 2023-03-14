@@ -5,6 +5,8 @@ source /etc/os-release
 set -x
 
 BRANCH="upstream"
+
+source test_SDK_var.sh
 #test arguments
 while [[ $# -gt 0 ]]; do
     OPTION="$1"
@@ -16,15 +18,15 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-declare -A listepath
-listepath=(
-["/fedora/36/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/Fedora_36/latest/"
-["/fedora/37/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/Fedora_37/latest/"
-["/debian/11/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/Debian_11/latest/"
-["/ubuntu/20.04/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/Ubuntu_20.04/latest/"
-["/ubuntu/22.04/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/Ubuntu_22.04/latest/"
-["/opensuse-leap/15.3/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/openSUSE_Leap_15.3/latest/"
-["/opensuse-leap/15.4/"]="http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/openSUSE_Leap_15.4/latest/"
+declare -A list_distro_name
+list_distro_name=(
+["/fedora/36/"]="Fedora_36"
+["/fedora/37/"]="Fedora_37"
+["/debian/11/"]="Debian_11"
+["/ubuntu/20.04/"]="xUbuntu_20.04"
+["/ubuntu/22.04/"]="xUbuntu_22.04"
+["/opensuse-leap/15.3/"]="openSUSE_Leap_15.3"
+["/opensuse-leap/15.4/"]="openSUSE_Leap_15.4"
 )
 
 RESULT_DST="/home/vagrant/ci/${ID}_${VERSION_ID}_${BRANCH}_xunit.xml"
@@ -52,9 +54,9 @@ test() {
 sdktest () {
     #install and test the SDK
     (( line=LINENO + 1 ))
-    REPO_URL="${listepath[$1]}"
-    if [ -z "${REPO_URL}" ]; then
-        echo "No repo URL fort this distribution"
+    DISTRO_NAME="${list_distro_name[$1]}"
+    if [ -z "${DISTRO_NAME}" ]; then
+        echo "No DISTRO_NAME for this distribution"
         return 1
     fi
     if [ "${BRANCH}" == "upstream" ]; then
@@ -64,7 +66,11 @@ sdktest () {
             test "error" "test_native_install" "$line"
         fi
     else
-        if ./install-redpesk-sdk.sh -r "${REPO_URL}" ; then
+        if ./install-redpesk-sdk.sh -r "http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/sdk-arz-third-party/${DISTRO_NAME}/latest/" \
+                                    -r "http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/sdk-arz/${DISTRO_NAME}/latest/" \
+                                    -i "http://silo.redpesk.iot/redpesk/private/tools/obs/master/tools-third-party/${DISTRO_NAME}/latest/" \
+                                    -i "http://silo.redpesk.iot/redpesk/private/tools/obs/master/tools/${DISTRO_NAME}/latest/" \
+                                    ; then
             test "success" "test_native_install" "$line"
         else 
             test "error" "test_native_install" "$line"
