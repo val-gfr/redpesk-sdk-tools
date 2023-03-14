@@ -261,7 +261,7 @@ case $ID in
 					sudo rm -fr "${REPO_CONF_FILE}"
 					for repo in ${REDPESK_REPO}; do
 						#This should be fixed
-						wget -O - "${repo}"Release.key | sudo apt-key add -
+						wget -O - "${repo}/Release.key" | sudo apt-key add -
 						#sudo rm -f  "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
 						#curl "${repo}/Release.key" | sudo gpg --no-tty --dearmor --output "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
 						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" >> '"${REPO_CONF_FILE}"
@@ -406,7 +406,7 @@ EOF
 					sudo rm -fr "${REPO_CONF_FILE}"
 					for repo in ${REDPESK_REPO}; do
 						#This should be fixed
-						wget -O - "${repo}"Release.key | sudo apt-key add -
+						wget -O - "${repo}/Release.key" | sudo apt-key add -
 						#sudo rm -f  "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
 						#curl  "${repo}/Release.key" | sudo gpg --no-tty --dearmor --output "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
 						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" > '"${REPO_CONF_FILE}"
