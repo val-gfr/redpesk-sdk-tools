@@ -409,7 +409,7 @@ EOF
 						wget -O - "${repo}/Release.key" | sudo apt-key add -
 						#sudo rm -f  "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
 						#curl  "${repo}/Release.key" | sudo gpg --no-tty --dearmor --output "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
-						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" > '"${REPO_CONF_FILE}"
+						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" >> '"${REPO_CONF_FILE}"
 						ID_REPO=$(( $ID_REPO + 1))
 					done
 				fi
@@ -419,7 +419,7 @@ EOF
 					for repo in ${REDPESK_CI_REPO}; do
 						sudo rm -f  "/etc/apt/trusted.gpg.d/redpesk-ci-${ID_REPO}.gpg"
 						curl "${repo}/Release.key" | sudo gpg --no-tty --dearmor --output "/etc/apt/trusted.gpg.d/redpesk-ci-${ID_REPO}.gpg"
-						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" > '"${CI_REPO_CONF_FILE}"
+						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" >> '"${CI_REPO_CONF_FILE}"
 						ID_REPO=$(( $ID_REPO + 1))
 					done
 				fi
