@@ -113,7 +113,9 @@ sdktest () {
     if sudo afm-test --logfile "${LOGFILETEST}" /var/local/lib/afm/applications/helloworld-binding /var/local/lib/afm/applications/helloworld-binding-test ; then
         test "success" "test_afm-test" "$line"
         #test the afm-test command results
-        if grep "ERROR:" "${LOGFILETEST}"; then
+        if [ ! -f "${LOGFILETEST}" ]; then
+            test "error" "test_afm-test-result" "$line" "No ${LOGFILETEST} generated"
+        elif grep "ERROR:" "${LOGFILETEST}"; then
             error=$(grep "ERROR:" "${LOGFILETEST}" | cut -d">" -f2)
             test "error" "test_afm-test-result" "$line" "$error"
         else
