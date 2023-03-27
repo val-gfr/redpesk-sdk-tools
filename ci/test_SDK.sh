@@ -66,8 +66,8 @@ sdktest () {
             test "error" "test_native_install" "$line"
         fi
     else
-        if ./install-redpesk-sdk.sh -r "http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/sdk-arz-third-party/${DISTRO_NAME}/latest/" \
-                                    -r "http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/sdk-arz/${DISTRO_NAME}/latest/" \
+        if ./install-redpesk-sdk.sh -r "http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/sdk-third-party/${DISTRO_NAME}/latest/" \
+                                    -r "http://silo.redpesk.iot/redpesk/private/sdk/obs/${BRANCH}/sdk/${DISTRO_NAME}/latest/" \
                                     -i "http://silo.redpesk.iot/redpesk/private/tools/obs/master/tools-third-party/${DISTRO_NAME}/latest/" \
                                     -i "http://silo.redpesk.iot/redpesk/private/tools/obs/master/tools/${DISTRO_NAME}/latest/" \
                                     ; then
