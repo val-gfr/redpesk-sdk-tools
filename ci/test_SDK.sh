@@ -110,7 +110,20 @@ sdktest () {
     #test afm-test command
     (( line=LINENO + 1 ))
     echo "Start helloworld-binding test"
-    if sudo afm-test --logfile "${LOGFILETEST}" /var/local/lib/afm/applications/helloworld-binding /var/local/lib/afm/applications/helloworld-binding-test ; then
+
+    INSTALL_PATH="/usr/redpesk"
+
+    if [ ! -d "${INSTALL_PATH}" ]; then
+        #This is the old path
+        INSTALL_PATH="/var/local/lib/afm/applications"
+
+        if [ ! -d "${INSTALL_PATH}" ]; then
+            test "error" "test_afm-test" "$line" "Installation directory is missing"
+            return 1
+        fi
+    fi
+
+    if sudo afm-test --logfile "${LOGFILETEST}" "${INSTALL_PATH}/helloworld-binding" "${INSTALL_PATH}/helloworld-binding-test" ; then
         test "success" "test_afm-test" "$line"
         #test the afm-test command results
         if [ ! -f "${LOGFILETEST}" ]; then
