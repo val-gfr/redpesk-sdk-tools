@@ -1,6 +1,6 @@
 #!/bin/bash
 ###########################################################################
-# Copyright (C) 2020, 2021, 2022 IoT.bzh
+# Copyright (C) 2020-2023 IoT.bzh
 #
 # Authors:   Thierry Bultel <thierry.bultel@iot.bzh>
 #            Ronan Le Martret <ronan.lemartret@iot.bzh>
@@ -22,7 +22,7 @@
 
 set -e
 set -o pipefail
-set -x
+#set -x
 
 function usage {
     printf "Usage: \n\
@@ -603,7 +603,7 @@ function setup_storage_pool {
             read -r -p "$(echo "Which storage to use in (${STORAGE_POOLS_LIST[@]})") [Default: $STORAGE_POOL_NAME]:" STORAGE_POOL_NAME
         fi
     fi
-    
+
     for storage in ${STORAGE_POOLS_LIST[@]}; do
         if [ "$STORAGE_POOL_NAME" == "$storage" ]; then
             storage_name_is_valid=1
@@ -628,7 +628,7 @@ function setup_init_lxd {
 
     case ${ID} in
     fedora|opensuse-leap)
-        
+
         FIRECMD="$(which firewall-cmd)" || echo "No firewall-cmd on this host"
         if [ -n "${FIRECMD}" ];then
             zone=$(sudo firewall-cmd --get-zone-of-interface=lxdbr0)||zone=none
@@ -874,7 +874,7 @@ function setup_lxc_container {
 
     setup_port_redirections
 
-    setup_kvm_device_mapping 
+    setup_kvm_device_mapping
 
     ${LXC} restart "${CONTAINER_NAME}"
 
@@ -887,7 +887,7 @@ function setup_lxc_container {
 }
 
 ##########
-check_user
+# check_user
 check_distribution
 
 case "${MAIN_CMD}" in

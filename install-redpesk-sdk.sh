@@ -1,6 +1,6 @@
 #!/bin/bash
 ###########################################################################
-# Copyright (C) 2020, 2021, 2022 IoT.bzh
+# Copyright (C) 2020-2023 IoT.bzh
 #
 # Authors: Armand Bénéteau <armand.beneteau@iot.bzh>
 #          Corentin Le Gall <corentin.legall@iot.bzh>
@@ -45,15 +45,15 @@ LIST_PACKAGE_RPM="afb-binder afb-binding-devel afb-libhelpers-devel afb-cmake-mo
 function sudo { command sudo -E "$@"; }
 
 function help {
-    echo -e "Supported distributions : $SUPPORTED_DISTROS\n
-            -c | --rp-cli:\t install rp-cli only\n
-            -r | --repository:\t redpesk sdk repository path\n
-            -o | --osversion:\t set the redpesk version value, default:${REDPESK_OS_VERSION_DEFAULT}\n
-            -i | --cirepository:\t redpesk ci repository path\n
-            -h | --help:\t Display help\n
-            -s | --skip-packages-install\n
-            -a | --non-interactive\n
-            -n | --no-recommends\n"
+    echo -e "Supported distributions : $SUPPORTED_DISTROS
+            -c | --rp-cli:                 install rp-cli only
+            -r | --repository:             redpesk sdk repository path
+            -o | --osversion:              set the redpesk version value, default:${REDPESK_OS_VERSION_DEFAULT}
+            -i | --cirepository:           redpesk ci repository path
+            -h | --help:                   display help
+            -s | --skip-packages-install
+            -a | --non-interactive
+            -n | --no-recommends"
     exit
 }
 
@@ -277,7 +277,7 @@ case $ID in
 						ID_REPO=$(( $ID_REPO + 1))
 					done
 				fi
-				
+
 				sudo apt-get update  --yes
 				# Manage the "no recommended option" variable
 				no_recommend_opt=""
@@ -316,7 +316,7 @@ case $ID in
 						ID_REPO=$(( $ID_REPO + 1))
 					done
 				fi
-				
+
 				ID_REPO=1
 
 				if [ "${CI_WRITE_CONF}" == "yes" ]; then
@@ -423,7 +423,7 @@ EOF
 						ID_REPO=$(( $ID_REPO + 1))
 					done
 				fi
-				
+
 				sudo apt-get update --yes
 				# Manage the "no recommended option" variable
 				no_recommend_opt=""
