@@ -23,7 +23,7 @@
 shopt -s extglob
 source /etc/os-release
 
-SUPPORTED_DISTROS="Ubuntu 20.04/22.04, OpenSUSE Leap 15.3/15.4, Fedora 36/37"
+SUPPORTED_DISTROS="Ubuntu 20.04/22.04, OpenSUSE Leap 15.3/15.4, Fedora 36/37, Linux Mint 21.1"
 
 #REDPESK_REPO can be given in command line, if so REDPESK_REPO must be the full path for the distro used.
 
@@ -139,7 +139,7 @@ REPO_CONF_FILE=""
 CI_REPO_CONF_FILE=""
 
 case $ID in
-	ubuntu)
+	ubuntu|linuxmint)
 		REPO_CONF_FILE="/etc/apt/sources.list.d/${REPO_CONF_FILE_NAME}.list"
 		CI_REPO_CONF_FILE="/etc/apt/sources.list.d/${REPO_CI_CONF_FILE_NAME}.list"
 		;;
@@ -223,6 +223,16 @@ function get_obs_distro_name {
 			case $VERSION_ID in
 				11)
 					echo "Debian_${VERSION_ID}"
+					;;
+				*)
+					error_message
+					;;
+			esac
+			;;
+		linuxmint)
+			case $VERSION_ID in
+				21.1)
+					echo "xUbuntu_22.04"
 					;;
 				*)
 					error_message
@@ -425,6 +435,50 @@ EOF
 				fi
 
 				sudo apt-get update --yes
+				# Manage the "no recommended option" variable
+				no_recommend_opt=""
+				if [ "${INSTALL_RECOMMENDED_PKG}" == "no" ]; then
+					no_recommend_opt="--no-install-recommends"
+				fi
+				#Install base redpesk packages
+				if [ "${SPIKPACKINST}" == "no" ]; then
+					sudo apt-get install -y ${no_recommend_opt} ${LIST_PACKAGE_DEB}
+				fi
+				;;
+			*)
+				error_message
+				;;
+		esac
+		;;
+	linuxmint)
+		case $VERSION_ID in
+			21.1)
+				#Add redpesk repos (ca-certificates is here to fix VM CI test)
+				sudo apt-get update --yes
+				sudo apt-get install -y curl wget add-apt-key gnupg ca-certificates
+				ID_REPO=1
+				if [ "${WRITE_CONF}" == "yes" ]; then
+					sudo rm -fr "${REPO_CONF_FILE}"
+					for repo in ${REDPESK_REPO}; do
+						#This should be fixed
+						wget -O - "${repo}/Release.key" | sudo apt-key add -
+						#sudo rm -f  "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
+						#curl "${repo}/Release.key" | sudo gpg --no-tty --dearmor --output "/etc/apt/trusted.gpg.d/redpesk-sdk-${ID_REPO}.gpg"
+						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" >> '"${REPO_CONF_FILE}"
+						ID_REPO=$(( $ID_REPO + 1))
+					done
+				fi
+				ID_REPO=1
+				if [ "${CI_WRITE_CONF}" == "yes" ]; then
+					sudo rm -fr "${CI_REPO_CONF_FILE}"
+					for repo in ${REDPESK_CI_REPO}; do
+						curl "${repo}/Release.key" | sudo gpg --no-tty --dearmor --output "/etc/apt/trusted.gpg.d/redpesk-ci-${ID_REPO}.gpg"
+						sudo sh -c 'echo "deb [trusted=yes] '"${repo}"' ./" >> '"${CI_REPO_CONF_FILE}"
+						ID_REPO=$(( $ID_REPO + 1))
+					done
+				fi
+
+				sudo apt-get update  --yes
 				# Manage the "no recommended option" variable
 				no_recommend_opt=""
 				if [ "${INSTALL_RECOMMENDED_PKG}" == "no" ]; then
