@@ -41,13 +41,11 @@ pipeline {
                     }
 
                     stage("Release SDK 1.1 inside private") {
-                        steps {
-                            build( job: "JF-sdk-Release", parameters: [
-                                string(name: 'RedpeskSdkVersion', value: 'arz-1.1'),
-                                string(name: 'ReleaseNumber', value: 'arz-1.1-update')
-                                ]
-                            )
-                        }
+                        build( job: "JF-sdk-Release", parameters: [
+                            string(name: 'RedpeskSdkVersion', value: 'arz-1.1'),
+                            string(name: 'ReleaseNumber', value: 'arz-1.1-update')
+                            ]
+                        )
                     }
                 }
             }
