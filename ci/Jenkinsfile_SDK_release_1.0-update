@@ -39,7 +39,16 @@ pipeline {
                         exit 0
                     """
                     }
-                    //parallel tests_by_os
+
+                    stage("Release SDK 1.0 inside private") {
+                        steps {
+                            build( job: "JF-sdk-Release", parameters: [
+                                string(name: 'RedpeskSdkVersion', value: 'arz-1.0'),
+                                string(name: 'ReleaseNumber', value: 'arz-1.0-update')
+                                ]
+                            )
+                        }
+                    }
                 }
             }
         }
