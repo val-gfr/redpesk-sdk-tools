@@ -59,6 +59,7 @@ IMAGE_STORE_PASSWD="iotbzh"
 declare -A SUPPORTED_FEDORA
 declare -A SUPPORTED_DEBIAN
 declare -A SUPPORTED_UBUNTU
+declare -A SUPPORTED_LINUXMINT
 declare -A SUPPORTED_OPENSUSE
 
 SUPPORTED_FEDORA["36"]="True"
@@ -66,6 +67,7 @@ SUPPORTED_FEDORA["37"]="True"
 SUPPORTED_DEBIAN["11"]="True"
 SUPPORTED_UBUNTU["20.04"]="True"
 SUPPORTED_UBUNTU["22.04"]="True"
+SUPPORTED_LINUXMINT["21.1"]="True"
 SUPPORTED_OPENSUSE["15.3"]="True"
 SUPPORTED_OPENSUSE["15.4"]="True"
 
@@ -217,6 +219,12 @@ function check_distribution {
             exit 1
         fi
         ;;
+    linuxmint)
+        if [[ ! ${SUPPORTED_LINUXMINT[${VERSION_ID}]} == "True" ]];then
+            echo -e "Unsupported version of distribution: ${ID}"
+            exit 1
+        fi
+        ;;
     debian)
         if [[ ! ${SUPPORTED_DEBIAN[${VERSION_ID}]} == "True" ]];then
             echo -e "Unsupported version of distribution: ${ID}"
@@ -346,6 +354,30 @@ function config_host {
         if [ -z "${HAVE_LXC}" ];then
             echo "Installing lxd from apt"
             sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes lxd
+        fi
+        if [ -z "${HAVE_AWK}" ];then
+            echo "Installing awk from apt"
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes gawk
+        fi
+        config_host_group
+        ;;
+    linuxmint)
+        sudo apt-get update --yes
+        if [ -z "${HAVE_JQ}" ];then
+            echo "Installing jq"
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes jq
+        fi
+        if [ -z "${HAVE_LXC}" ];then
+            SNAP="$(which snap)" || echo "No snap on this host"
+            echo "Installing snap from apt"
+            if [ -z "${SNAP}" ]; then
+                sudo rm -f /etc/apt/preferences.d/nosnap.pref
+                sudo DEBIAN_FRONTEND=noninteractive apt-get update
+                sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes snapd
+            fi
+            echo "Installing lxd from snap"
+            sudo snap install core
+            sudo snap install lxd
         fi
         if [ -z "${HAVE_AWK}" ];then
             echo "Installing awk from apt"

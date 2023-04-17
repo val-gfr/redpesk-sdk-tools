@@ -3,5 +3,6 @@ fedora/37/
 debian/11/
 ubuntu/20.04/
 ubuntu/22.04/
+linuxmint/v21/
 opensuse-leap/15.3/
 opensuse-leap/15.4/

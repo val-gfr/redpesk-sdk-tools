@@ -61,7 +61,7 @@ pipeline {
             mimeType: 'text/html',
             replyTo: '',
             subject: "ERROR CI: Project name -> ${env.JOB_NAME}",
-            to: "ronan.lemartret@gmail.com";  
+            to: "ronan.lemartret@iot.bzh";  
         }
     }
 }
